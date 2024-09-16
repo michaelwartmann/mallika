@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"> <!-- Changed language to English -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Happy Birthday Mallika! - Fun Experience</title> <!-- Updated title -->
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #starterPage {
+            text-align: center;
+            padding: 20px;
+        }
+        .birthday-image {
+            max-width: 200px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: block;
+            text-decoration: none;
+            text-align: center;
+            width: 220px;
+        }
+        .musicButton {
+            background-color: #ffc107;
+        }
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="starterPage">
+        <img src="mallika.jpg" alt="Mallika" class="birthday-image"> <!-- Updated image alt text -->
+        <h1>🎉 Happy Birthday, Mallika! 🎉</h1> <!-- Updated birthday message -->
+        <p>Enjoy your special day with fun activities!</p> <!-- Updated intro message -->
+        <div class="buttons-container">
+            <button class="button musicButton" onclick="playMusic()">Play Music</button>
+            <a href="game.html" class="button">Play Jump and Run Game</a> <!-- Added link to the game -->
+        </div>
+        <audio id="birthdaySong" src="bday.mp3" loop></audio>
+    </div>
+    <script>
+        const birthdaySong = document.getElementById('birthdaySong');
+        function playMusic() {
+            birthdaySong.volume = 0.3;
+            birthdaySong.play().catch((error) => {
+                console.log('Autoplay failed due to browser restrictions:', error);
+            });
+        }
+    </script>
+</body>
+</html>
