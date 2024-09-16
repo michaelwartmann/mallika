@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jump and Run Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #gameCanvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="300" height="150"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const player = {
+            x: 50,
+            y: 100,
+            width: 20,
+            height: 20,
+            speed: 5,
+            jumpStrength: 10,
+            yVelocity: 0,
+            isJumping: false
+        };
+
+        const obstacle = {
+            x: canvas.width,
+            y: 100,
+            width: 20,
+            height: 20,
+            speed: 3
+        };
+
+        let score = 0;
+
+        function drawPlayer() {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        function drawObstacle() {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'black';
+            ctx.font = '16px Arial';
+            ctx.fillText('Score: ' + score, 10, 20);
+        }
+
+        function update() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update player position
+            player.y += player.yVelocity;
+            player.yVelocity += 0.5; // Gravity
+
+            // Ground collision
+            if (player.y + player.height > canvas.height) {
+                player.y = canvas.height - player.height;
+                player.yVelocity = 0;
+                player.isJumping = false;
+            }
+
+            // Update obstacle position
+            obstacle.x -= obstacle.speed;
+
+            // Reset obstacle when it goes off-screen
+            if (obstacle.x + obstacle.width < 0) {
+                obstacle.x = canvas.width;
+                score++;
+            }
+
+            // Collision detection
+            if (
+                player.x < obstacle.x + obstacle.width &&
+                player.x + player.width > obstacle.x &&
+                player.y < obstacle.y + obstacle.height &&
+                player.y + player.height > obstacle.y
+            ) {
+                // Game over
+                alert('Game Over! Score: ' + score);
+                score = 0;
+                obstacle.x = canvas.width;
+            }
+
+            // Draw everything
+            drawPlayer();
+            drawObstacle();
+            drawScore();
+
+            requestAnimationFrame(update);
+        }
+
+        function jump() {
+            if (!player.isJumping) {
+                player.yVelocity = -player.jumpStrength;
+                player.isJumping = true;
+            }
+        }
+
+        // Touch event listener
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            jump();
+        });
+
+        update();
+    </script>
+</body>
+</html>
