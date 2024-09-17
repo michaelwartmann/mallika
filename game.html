@@ -234,7 +234,7 @@
         function drawScore() {
             ctx.fillStyle = 'black';
             ctx.font = '24px Arial';
-            ctx.fillText('Magic Points: ' + score, 10, 30);
+            ctx.fillText('Cash Balance: ' + score, 10, 30);
         }
 
         function update() {
@@ -278,7 +278,7 @@
                     player.x < obj.x + 20 && player.x + player.width > obj.x &&
                     player.y < obj.y + 20 && player.y + player.height > obj.y) {
                     obj.collected = true;
-                    score += 10;
+                    score += 5;
                     updateProgressDisplay();
                 }
             });
