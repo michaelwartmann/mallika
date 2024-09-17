@@ -68,7 +68,6 @@
         });
 
         let currentBackgroundIndex = 0;
-        let backgroundX = 0;
 
         const catImg = new Image();
         catImg.src = './cat.jpg';
@@ -91,7 +90,7 @@
 
         function drawBackground() {
             // Draw the current background
-            ctx.drawImage(backgrounds[currentBackgroundIndex], backgroundX, 0, canvas.width, canvas.height);
+            ctx.drawImage(backgrounds[currentBackgroundIndex], 0, 0, canvas.width, canvas.height);
         }
 
         function drawPlayer() {
@@ -154,7 +153,7 @@
             ctx.fillText('You made it to the party!', canvas.width / 2 - 180, canvas.height / 2 + 150);
         }
 
-        function handleSwipe(e) {
+        function handleTouchStart(e) {
             const touch = e.changedTouches[0];
             const startX = touch.pageX;
             const startY = touch.pageY;
@@ -163,19 +162,18 @@
                 const moveX = event.changedTouches[0].pageX;
                 const moveY = event.changedTouches[0].pageY;
 
-                // Detect swipe up for jump
-                if (moveY < startY - 30) {
+                // Detect explicit upward swipe for jump
+                if (moveY < startY - 30 && Math.abs(moveX - startX) < 30) {
                     jump();
                     canvas.removeEventListener('touchmove', move);
                 }
             });
         }
 
-        function handleTouch(e) {
-            const touch = e.changedTouches[0];
-            const touchX = touch.pageX;
+        function handleTap(e) {
+            const touchX = e.changedTouches[0].pageX;
 
-            // Move left or right based on touch position
+            // Move left or right based on tap position
             if (touchX < canvas.width / 2) {
                 player.x -= player.speed; // Move left
             } else {
@@ -188,8 +186,8 @@
             gameLoop = setInterval(update, 1000 / 60);
         }
 
-        canvas.addEventListener('touchstart', handleSwipe);
-        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchstart', handleTouchStart);
+        canvas.addEventListener('touchstart', handleTap);
     </script>
 </body>
 </html>
