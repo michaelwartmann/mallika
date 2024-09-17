@@ -1,73 +1,409 @@
 <!DOCTYPE html>
-<html lang="en"> <!-- Changed language to English -->
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Happy Birthday Mallika! - Fun Experience</title> <!-- Updated title -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mallika’s Magical Birthday Adventure</title>
     <style>
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #87CEEB;
             font-family: Arial, sans-serif;
             overflow: hidden;
         }
-        #starterPage {
-            text-align: center;
-            padding: 20px;
+        #gameCanvas {
+            border: 1px solid #000;
+            touch-action: none;
         }
-        .birthday-image {
-            max-width: 200px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .button {
-            padding: 15px 30px;
-            font-size: 18px;
-            background-color: #007bff;
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
             color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-            display: block;
-            text-decoration: none;
-            text-align: center;
-            width: 220px;
-        }
-        .musicButton {
-            background-color: #ffc107;
-        }
-        .buttons-container {
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
+            text-align: center;
+            z-index: 10;
+        }
+        #progress {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: black;
         }
     </style>
 </head>
 <body>
-    <div id="starterPage">
-        <img src="mallika.jpg" alt="Mallika" class="birthday-image"> <!-- Updated image alt text -->
-        <h1>🎉 Happy Birthday, Mallika! 🎉</h1> <!-- Updated birthday message -->
-        <p>Enjoy your special day with fun activities!</p> <!-- Updated intro message -->
-        <div class="buttons-container">
-            <button class="button musicButton" onclick="playMusic()">Play Music</button>
-            <a href="game.html" class="button">Play Jump and Run Game</a> <!-- Added link to the game -->
-        </div>
-        <audio id="birthdaySong" src="bdayX.mp3" loop></audio>
+    <div class="start-screen" id="startScreen">
+        <h1>Mallika’s Magical Birthday Adventure</h1>
+        <p>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake!</p>
+        <button onclick="startGame()">Start Game</button>
     </div>
+    <div id="progress">_ _ _ _ _ _</div>
+    <canvas id="gameCanvas"></canvas>
     <script>
-        const birthdaySong = document.getElementById('birthdaySong');
-        function playMusic() {
-            birthdaySong.volume = 0.3;
-            birthdaySong.play().catch((error) => {
-                console.log('Autoplay failed due to browser restrictions:', error);
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let currentBackgroundIndex = 0;
+
+        // Load multiple background segments
+        const backgrounds = [
+            './background1.jpg',
+            './background2.jpg',
+            './background3.jpg',
+            './background4.jpg'
+        ].map(src => {
+            const img = new Image();
+            img.src = src;
+            return img;
+        });
+
+        const objects = [
+            // Screen 1: Arranged by you
+            [
+                { type: 'obstacle', x: 150, y: 250, width: 70, height: 70 },
+                { type: 'platform', x: 300, y: 200, width: 100, height: 20 },
+                { type: 'platform', x: 400, y: 200, width: 100, height: 20 },
+                { type: 'platform', x: 500, y: 150, width: 100, height: 20 },
+                { type: 'platform', x: 700, y: 200, width: 100, height: 20 },
+                { type: 'letter', char: 'M', x: 550, y: 100 },
+                { type: 'letter', char: 'A', x: 750, y: 100 }
+            ],
+            // Screen 2: Ladder and Maze
+            [
+                { type: 'platform', x: 100, y: 300, width: 100, height: 20 },
+                { type: 'platform', x: 200, y: 250, width: 100, height: 20 },
+                { type: 'platform', x: 300, y: 200, width: 100, height: 20 },
+                { type: 'letter', char: 'L', x: 320, y: 170 },
+                { type: 'obstacle', x: 450, y: 300, width: 50, height: 50 },  // Starting the maze
+                { type: 'platform', x: 500, y: 350, width: 80, height: 20 },
+                { type: 'platform', x: 600, y: 300, width: 100, height: 20 },
+                { type: 'obstacle', x: 700, y: 250, width: 50, height: 50 },
+                { type: 'letter', char: 'L', x: 650, y: 230 }
+            ],
+            // Screen 3: Moving Obstacle Course
+            [
+                { type: 'obstacle', x: 150, y: 300, width: 50, height: 50 },
+                { type: 'platform', x: 250, y: 350, width: 100, height: 20, moving: 'horizontal' },
+                { type: 'platform', x: 400, y: 300, width: 100, height: 20 },
+                { type: 'platform', x: 550, y: 250, width: 100, height: 20, moving: 'vertical' },
+                { type: 'letter', char: 'I', x: 570, y: 220 },
+                { type: 'obstacle', x: 700, y: 320, width: 50, height: 50 },
+                { type: 'letter', char: 'K', x: 730, y: 290 }
+            ],
+            // Screen 4: Blocked Path to Friends
+            [
+                { type: 'obstacle', x: 100, y: 320, width: 70, height: 70 },
+                { type: 'obstacle', x: 300, y: 300, width: 50, height: 50 },
+                { type: 'platform', x: 400, y: 250, width: 100, height: 20 },
+                { type: 'obstacle', x: 550, y: 270, width: 50, height: 50 },
+                { type: 'platform', x: 600, y: 230, width: 80, height: 20 },
+                { type: 'cake', x: 500, y: 250, width: 100, height: 100 } // Friends waiting
+            ]
+        ];
+
+        const catImg = new Image();
+        catImg.src = './mallika.png';
+        const obstacleImg = new Image();
+        obstacleImg.src = './obstacle.png';
+        const platformImg = new Image();
+        platformImg.src = './platform.png';
+        const cakeImg = new Image();
+        cakeImg.src = './cake.png';
+
+        // Load the images for Vallari, Eleonora, and the animals
+        const vallariImg = new Image();
+        vallariImg.src = './vallari.png';
+
+        const eleonoraImg = new Image();
+        eleonoraImg.src = './eleonora.png';
+
+        const dogImg = new Image();
+        dogImg.src = './dog.png';
+
+        const eagleImg = new Image();
+        eagleImg.src = './eagle.png';
+
+        // Define their positions on the final screen
+        const finalScreenCharacters = [
+            { img: vallariImg, x: 550, y: 250, width: 50, height: 50 },
+            { img: eleonoraImg, x: 650, y: 250, width: 50, height: 50 },
+            { img: dogImg, x: 500, y: 300, width: 60, height: 40 },
+            { img: eagleImg, x: 600, y: 220, width: 60, height: 40 }
+        ];
+
+        const animals = [
+            { type: 'dog', img: './dog.png', width: 60, height: 40 },
+            { type: 'eagle', img: './eagle.png', width: 60, height: 40 }
+        ];
+
+        let activeAnimals = [];
+
+        const player = {
+            x: 100,
+            y: 300,
+            width: 50,
+            height: 50,
+            speed: 5,
+            jumpStrength: 15,
+            yVelocity: 0,
+            isJumping: false,
+            targetX: null,
+            movingDirection: null
+        };
+
+        let score = 0;
+        let gameLoop;
+
+        const music = new Audio('./bday.mp3');
+        music.loop = true;
+        music.volume = 0.3;
+
+        function drawBackground() {
+            ctx.drawImage(backgrounds[currentBackgroundIndex], 0, 0, canvas.width, canvas.height);
+        }
+
+        function drawPlayer() {
+            ctx.drawImage(catImg, player.x, player.y, player.width, player.height);
+        }
+
+        function drawObjects() {
+            objects[currentBackgroundIndex].forEach(obj => {
+                switch (obj.type) {
+                    case 'obstacle':
+                        ctx.drawImage(obstacleImg, obj.x, obj.y, obj.width, obj.height);
+                        break;
+                    case 'platform':
+                        ctx.drawImage(platformImg, obj.x, obj.y, obj.width, obj.height);
+                        break;
+                    case 'letter':
+                        ctx.fillStyle = 'red';
+                        ctx.font = '40px Arial';
+                        ctx.fillText(obj.char, obj.x, obj.y);
+                        break;
+                    case 'cake':
+                        ctx.drawImage(cakeImg, obj.x, obj.y, obj.width, obj.height);
+                        drawFinalScreenCharacters(); // Draw Vallari, Eleonora, and the animals
+                        break;
+                }
             });
         }
+
+        // Function to draw Vallari, Eleonora, and the animals on the final screen
+        function drawFinalScreenCharacters() {
+            finalScreenCharacters.forEach(character => {
+                ctx.drawImage(character.img, character.x, character.y, character.width, character.height);
+            });
+        }
+
+        function spawnAnimal() {
+            const animalType = animals[Math.floor(Math.random() * animals.length)];
+            const img = new Image();
+            img.src = animalType.img;
+            const x = canvas.width;
+            const y = animalType.type === 'dog' ? canvas.height - 100 : Math.random() * 200; // dogs on ground, eagles fly
+            activeAnimals.push({ type: animalType.type, img, x, y, width: animalType.width, height: animalType.height });
+        }
+
+        function drawAnimals() {
+            activeAnimals.forEach(animal => {
+                ctx.drawImage(animal.img, animal.x, animal.y, animal.width, animal.height);
+                if (animal.type === 'dog') {
+                    animal.x -= 2; // Speed of dogs
+                } else if (animal.type === 'eagle') {
+                    animal.x -= 3; // Speed of eagles
+                }
+            });
+            activeAnimals = activeAnimals.filter(animal => animal.x + animal.width > 0); // Remove animals off-screen
+        }
+
+        function checkPlatformCollision() {
+            objects[currentBackgroundIndex].forEach(obj => {
+                if (obj.type === 'platform' &&
+                    player.x < obj.x + obj.width &&
+                    player.x + player.width > obj.x &&
+                    player.y + player.height > obj.y &&
+                    player.y + player.height < obj.y + obj.height + 20) {
+                    player.y = obj.y - player.height;
+                    player.yVelocity = 0;
+                    player.isJumping = false;
+                }
+            });
+        }
+
+        function checkAnimalCollision() {
+            activeAnimals.forEach(animal => {
+                if (
+                    player.x < animal.x + animal.width &&
+                    player.x + player.width > animal.x &&
+                    player.y < animal.y + animal.height &&
+                    player.y + player.height > animal.y
+                ) {
+                    resetScreen(); // Restart current screen
+                }
+            });
+        }
+
+        function resetScreen() {
+            player.x = 100;
+            player.y = 300;
+            player.yVelocity = 0;
+            activeAnimals = [];
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'black';
+            ctx.font = '24px Arial';
+            ctx.fillText('Magic Points: ' + score, 10, 30);
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+            drawPlayer();
+            drawObjects();
+            drawAnimals();
+            drawScore();
+
+            player.y += player.yVelocity;
+            player.yVelocity += 0.8;
+
+            if (player.y + player.height > canvas.height - 50) {
+                player.y = canvas.height - player.height - 50;
+                player.yVelocity = 0;
+                player.isJumping = false;
+            }
+
+            checkPlatformCollision();
+            checkAnimalCollision();
+
+            if (player.targetX !== null) {
+                if (player.x < player.targetX) {
+                    player.x += player.speed;
+                    player.movingDirection = 'right';
+                    if (player.x >= player.targetX) {
+                        player.targetX = null;
+                    }
+                } else if (player.x > player.targetX) {
+                    player.x -= player.speed;
+                    player.movingDirection = 'left';
+                    if (player.x <= player.targetX) {
+                        player.targetX = null;
+                    }
+                }
+            }
+
+            objects[currentBackgroundIndex].forEach(obj => {
+                if (obj.type === 'letter' && !obj.collected &&
+                    player.x < obj.x + 20 && player.x + player.width > obj.x &&
+                    player.y < obj.y + 20 && player.y + player.height > obj.y) {
+                    obj.collected = true;
+                    score += 10;
+                    updateProgressDisplay();
+                }
+            });
+
+            // Allow transition to the next screen when moving to the right
+            if (player.x > canvas.width - 100) {
+                if (currentBackgroundIndex < backgrounds.length - 1) {
+                    currentBackgroundIndex++;
+                    resetScreen();
+                } else {
+                    // If on the last screen, prevent moving beyond the boundary
+                    player.x = canvas.width - 100;
+                }
+            }
+
+            // Allow transition to the previous screen when moving to the left
+            if (player.x < 0) {
+                if (currentBackgroundIndex > 0) {
+                    currentBackgroundIndex--;
+                    player.x = canvas.width - 50; // Position player on the right edge of the previous screen
+                } else {
+                    // If on the first screen, prevent moving beyond the boundary
+                    player.x = 0;
+                }
+            }
+        }
+
+        function jump() {
+            if (!player.isJumping) {
+                player.yVelocity = -player.jumpStrength;
+                player.isJumping = true;
+                if (player.movingDirection === 'left') {
+                    player.x -= player.speed;
+                } else if (player.movingDirection === 'right') {
+                    player.x += player.speed;
+                }
+            }
+        }
+
+        function reachParty() {
+            clearInterval(gameLoop);
+            ctx.drawImage(cakeImg, canvas.width - 150, 250, 100, 100);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '48px Arial';
+            ctx.fillText('You made it to the party!', canvas.width / 2 - 180, canvas.height / 2 + 150);
+        }
+
+        function updateProgressDisplay() {
+            const collectedLetters = objects.flat().filter(obj => obj.type === 'letter').map(letter => (letter.collected ? letter.char : '_')).join(' ');
+            document.getElementById('progress').innerText = collectedLetters;
+        }
+
+        function handleTouchStart(e) {
+            const touch = e.changedTouches[0];
+            const startX = touch.pageX;
+            const startY = touch.pageY;
+
+            canvas.addEventListener('touchmove', function move(event) {
+                const moveX = event.changedTouches[0].pageX;
+                const moveY = event.changedTouches[0].pageY;
+
+                if (moveY < startY - 30 && Math.abs(moveX - startX) < 30) {
+                    jump();
+                    canvas.removeEventListener('touchmove', move);
+                }
+            });
+        }
+
+        function handleTap(e) {
+            const touchX = e.changedTouches[0].pageX;
+            player.targetX = touchX;
+            player.movingDirection = touchX < player.x ? 'left' : 'right';
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            music.play();
+            gameLoop = setInterval(update, 1000 / 60);
+            setInterval(spawnAnimal, 3000); // Spawn a new animal every 3 seconds
+        }
+
+        canvas.addEventListener('touchstart', handleTouchStart);
+        canvas.addEventListener('touchstart', handleTap);
     </script>
 </body>
 </html>
