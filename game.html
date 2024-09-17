@@ -35,26 +35,6 @@
             text-align: center;
             z-index: 10;
         }
-        .controls {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-        }
-        .btn {
-            width: 60px;
-            height: 60px;
-            background-color: rgba(0, 0, 0, 0.5);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            font-size: 24px;
-            text-align: center;
-            line-height: 60px;
-            user-select: none;
-        }
     </style>
 </head>
 <body>
@@ -64,9 +44,6 @@
         <button onclick="startGame()">Start Game</button>
     </div>
     <canvas id="gameCanvas"></canvas>
-    <div class="controls">
-        <button class="btn" id="jumpBtn">⬆️</button>
-    </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -82,28 +59,24 @@
         const backgrounds = [
             './background1.jpg', // First background segment
             './background2.jpg', // Second background segment
-            './background3.jpg'  // Third background segment
+            './background3.jpg', // Third background segment
+            './background4.jpg'  // Fourth background segment with the party setup
         ].map(src => {
             const img = new Image();
             img.src = src;
             return img;
         });
 
-        let backgroundSegments = [
-            { img: backgrounds[0], x: 0 },
-            { img: backgrounds[1], x: canvas.width },
-            { img: backgrounds[2], x: canvas.width * 2 }
-        ];
+        let currentBackgroundIndex = 0;
+        let backgroundX = 0;
 
         const catImg = new Image();
         catImg.src = './cat.jpg';
         const obstacleImg = new Image();
         obstacleImg.src = './obstacle.jpg';
-        const partyImg = new Image();
-        partyImg.src = './party.jpg'; // Image of friends at the party
 
         const player = {
-            x: 50,
+            x: 100,
             y: 300,
             width: 50,
             height: 50,
@@ -113,31 +86,16 @@
             isJumping: false
         };
 
-        const obstacle = {
-            x: canvas.width,
-            y: 300,
-            width: 50,
-            height: 50,
-            speed: 5
-        };
-
         let score = 0;
         let gameLoop;
 
         function drawBackground() {
-            backgroundSegments.forEach(segment => {
-                ctx.drawImage(segment.img, segment.x, 0, canvas.width, canvas.height);
-                segment.x -= 2; // Move the background segments to the left
-            });
-
-            // Reposition backgrounds to create an endless scroll effect
-            backgroundSegments.forEach((segment, index) => {
-                if (segment.x <= -canvas.width) {
-                    // Move this segment to the end of the last one
-                    const lastSegment = backgroundSegments[(index - 1 + backgroundSegments.length) % backgroundSegments.length];
-                    segment.x = lastSegment.x + canvas.width;
-                }
-            });
+            // Draw the current and next background
+            ctx.drawImage(backgrounds[currentBackgroundIndex], backgroundX, 0, canvas.width, canvas.height);
+            if (backgroundX <= -canvas.width && currentBackgroundIndex < backgrounds.length - 1) {
+                currentBackgroundIndex++;
+                backgroundX = 0;
+            }
         }
 
         function drawPlayer() {
@@ -145,7 +103,7 @@
         }
 
         function drawObstacle() {
-            ctx.drawImage(obstacleImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            ctx.drawImage(obstacleImg, 600, 300, 50, 50); // Example obstacle, adjust as needed
         }
 
         function drawScore() {
@@ -157,39 +115,25 @@
         function update() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
+            drawPlayer();
+            drawObstacle();
+            drawScore();
 
+            // Update player position
             player.y += player.yVelocity;
-            player.yVelocity += 0.8;
+            player.yVelocity += 0.8; // Gravity
 
+            // Ground collision
             if (player.y + player.height > canvas.height - 50) {
                 player.y = canvas.height - player.height - 50;
                 player.yVelocity = 0;
                 player.isJumping = false;
             }
 
-            obstacle.x -= obstacle.speed;
-            if (obstacle.x + obstacle.width < 0) {
-                obstacle.x = canvas.width;
-                obstacle.y = 300;
-                obstacle.speed += 0.5;
-            }
-
-            if (
-                player.x < obstacle.x + obstacle.width &&
-                player.x + player.width > obstacle.x &&
-                player.y < obstacle.y + obstacle.height &&
-                player.y + player.height > obstacle.y
-            ) {
-                handleGameOver();
-            }
-
-            if (player.x > canvas.width - 100) {
+            // Check if player reaches the last frame
+            if (currentBackgroundIndex === backgrounds.length - 1 && player.x > canvas.width - 150) {
                 reachParty();
             }
-
-            drawPlayer();
-            drawObstacle();
-            drawScore();
         }
 
         function jump() {
@@ -199,36 +143,44 @@
             }
         }
 
-        function startGame() {
-            document.getElementById('startScreen').style.display = 'none';
-            gameLoop = setInterval(update, 1000 / 60);
-        }
-
         function reachParty() {
             clearInterval(gameLoop);
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(partyImg, canvas.width / 2 - 100, canvas.height / 2 - 100, 200, 200);
             ctx.fillStyle = 'white';
             ctx.font = '48px Arial';
             ctx.fillText('You made it to the party!', canvas.width / 2 - 180, canvas.height / 2 + 150);
         }
 
-        function handleGameOver() {
-            clearInterval(gameLoop);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.font = '48px Arial';
-            ctx.fillText('Game Over!', canvas.width / 2 - 100, canvas.height / 2);
+        function handleSwipe(e) {
+            const touch = e.changedTouches[0];
+            if (touch) {
+                // Calculate the direction and distance of the swipe
+                let direction = touch.clientX - canvas.width / 2;
+                if (direction > 20) {
+                    // Swipe right
+                    player.x += player.speed;
+                } else if (direction < -20) {
+                    // Swipe left
+                    player.x -= player.speed;
+                }
+            }
         }
 
-        document.getElementById('jumpBtn').addEventListener('click', jump);
-        document.addEventListener('keydown', function(e) {
-            if (e.code === 'Space') {
+        function handleTouch(e) {
+            e.preventDefault();
+            if (e.type === 'touchstart') {
                 jump();
             }
-        });
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            gameLoop = setInterval(update, 1000 / 60);
+        }
+
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleSwipe);
     </script>
 </body>
 </html>
