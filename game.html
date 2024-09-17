@@ -82,7 +82,9 @@
             speed: 5,
             jumpStrength: 15,
             yVelocity: 0,
-            isJumping: false
+            isJumping: false,
+            targetX: null, // Target position where the cat should move
+            movingDirection: null // 'left' or 'right' based on movement
         };
 
         let score = 0;
@@ -125,6 +127,23 @@
                 player.isJumping = false;
             }
 
+            // Move the player towards the targetX
+            if (player.targetX !== null) {
+                if (player.x < player.targetX) {
+                    player.x += player.speed;
+                    player.movingDirection = 'right';
+                    if (player.x >= player.targetX) {
+                        player.targetX = null; // Stop moving
+                    }
+                } else if (player.x > player.targetX) {
+                    player.x -= player.speed;
+                    player.movingDirection = 'left';
+                    if (player.x <= player.targetX) {
+                        player.targetX = null; // Stop moving
+                    }
+                }
+            }
+
             // Transition to next background when reaching the right edge
             if (player.x > canvas.width - 50 && currentBackgroundIndex < backgrounds.length - 1) {
                 currentBackgroundIndex++;
@@ -141,6 +160,12 @@
             if (!player.isJumping) {
                 player.yVelocity = -player.jumpStrength;
                 player.isJumping = true;
+                // Apply horizontal movement during jump
+                if (player.movingDirection === 'left') {
+                    player.x -= player.speed;
+                } else if (player.movingDirection === 'right') {
+                    player.x += player.speed;
+                }
             }
         }
 
@@ -173,12 +198,9 @@
         function handleTap(e) {
             const touchX = e.changedTouches[0].pageX;
 
-            // Move left or right based on tap position
-            if (touchX < canvas.width / 2) {
-                player.x -= player.speed; // Move left
-            } else {
-                player.x += player.speed; // Move right
-            }
+            // Set the new target position and direction based on the click
+            player.targetX = touchX;
+            player.movingDirection = touchX < player.x ? 'left' : 'right';
         }
 
         function startGame() {
