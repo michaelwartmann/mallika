@@ -283,14 +283,26 @@
                 }
             });
 
-            // Adjusted transition boundary
-            if (player.x > canvas.width - 100 && currentBackgroundIndex < backgrounds.length - 1) {
-                currentBackgroundIndex++;
-                resetScreen();
+            // Allow transition to the next screen when moving to the right
+            if (player.x > canvas.width - 100) {
+                if (currentBackgroundIndex < backgrounds.length - 1) {
+                    currentBackgroundIndex++;
+                    resetScreen();
+                } else {
+                    // If on the last screen, prevent moving beyond the boundary
+                    player.x = canvas.width - 100;
+                }
             }
 
-            if (currentBackgroundIndex === backgrounds.length - 1 && player.x > canvas.width - 150) {
-                reachParty();
+            // Allow transition to the previous screen when moving to the left
+            if (player.x < 0) {
+                if (currentBackgroundIndex > 0) {
+                    currentBackgroundIndex--;
+                    player.x = canvas.width - 50; // Position player on the right edge of the previous screen
+                } else {
+                    // If on the first screen, prevent moving beyond the boundary
+                    player.x = 0;
+                }
             }
         }
 
