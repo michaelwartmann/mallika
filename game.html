@@ -51,7 +51,7 @@
         <p>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake!</p>
         <button onclick="startGame()">Start Game</button>
     </div>
-    <div id="progress">M _ A _ L _ L _ I _ K _ A</div>
+    <div id="progress">_ _ _ _ _ _</div>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -115,7 +115,7 @@
         const obstacleImg = new Image();
         obstacleImg.src = './obstacle.png';
         const platformImg = new Image();
-        platformImg.src = './platform.jpg';
+        platformImg.src = './platform.png';
         const cakeImg = new Image();
         cakeImg.src = './cake.png';
 
@@ -180,7 +180,7 @@
             const img = new Image();
             img.src = animalType.img;
             const x = canvas.width;
-            const y = animalType.type === 'dog' ? canvas.height - 90 : Math.random() * 200; // dogs on ground, eagles fly
+            const y = animalType.type === 'dog' ? canvas.height - 100 : Math.random() * 200; // dogs on ground, eagles fly
             activeAnimals.push({ type: animalType.type, img, x, y, width: animalType.width, height: animalType.height });
         }
 
