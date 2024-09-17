@@ -295,7 +295,7 @@
             }
 
             // Allow transition to the previous screen when moving to the left
-            if (player.x < 0) {
+            if (player.x < 90) {
                 if (currentBackgroundIndex > 0) {
                     currentBackgroundIndex--;
                     player.x = canvas.width - 50; // Position player on the right edge of the previous screen
