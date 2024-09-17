@@ -28,13 +28,11 @@
 
         // Load images
         const catImg = new Image();
-        catImg.src = 'https://placekitten.com/50/50';
+        catImg.src = './cat.jpg'; // Updated path
         const backgroundImg = new Image();
-        backgroundImg.src = '/api/placeholder/800/400';
+        backgroundImg.src = './background.jpg'; // Updated path
         const obstacleImg = new Image();
-        obstacleImg.src = '/api/placeholder/50/50';
-        const collectibleImg = new Image();
-        collectibleImg.src = '/api/placeholder/30/30';
+        obstacleImg.src = './obstacle.jpg'; // Updated path
 
         const player = {
             x: 50,
@@ -55,21 +53,13 @@
             speed: 5
         };
 
-        const collectible = {
-            x: canvas.width + 200,
-            y: Math.random() * (canvas.height - 100),
-            width: 30,
-            height: 30,
-            speed: 3
-        };
-
         let score = 0;
         let gameLoop;
         let backgroundX = 0;
 
         function drawBackground() {
-            ctx.drawImage(backgroundImg, backgroundX, 0);
-            ctx.drawImage(backgroundImg, backgroundX + canvas.width, 0);
+            ctx.drawImage(backgroundImg, backgroundX, 0, canvas.width, canvas.height);
+            ctx.drawImage(backgroundImg, backgroundX + canvas.width, 0, canvas.width, canvas.height);
             backgroundX -= 2;
             if (backgroundX <= -canvas.width) {
                 backgroundX = 0;
@@ -82,10 +72,6 @@
 
         function drawObstacle() {
             ctx.drawImage(obstacleImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-        }
-
-        function drawCollectible() {
-            ctx.drawImage(collectibleImg, collectible.x, collectible.y, collectible.width, collectible.height);
         }
 
         function drawScore() {
@@ -121,15 +107,6 @@
                 obstacle.speed += 0.5; // Increase speed for difficulty
             }
 
-            // Update collectible position
-            collectible.x -= collectible.speed;
-
-            // Reset collectible when it goes off-screen
-            if (collectible.x + collectible.width < 0) {
-                collectible.x = canvas.width + Math.random() * 200;
-                collectible.y = Math.random() * (canvas.height - 100);
-            }
-
             // Collision detection with obstacle
             if (
                 player.x < obstacle.x + obstacle.width &&
@@ -137,34 +114,11 @@
                 player.y < obstacle.y + obstacle.height &&
                 player.y + player.height > obstacle.y
             ) {
-                // Game over
-                clearInterval(gameLoop);
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
-                ctx.font = '48px Arial';
-                ctx.fillText('Game Over!', canvas.width / 2 - 100, canvas.height / 2);
-                ctx.font = '24px Arial';
-                ctx.fillText('Magic Points: ' + score, canvas.width / 2 - 70, canvas.height / 2 + 40);
-                ctx.fillText('Tap to restart', canvas.width / 2 - 70, canvas.height / 2 + 80);
-                canvas.addEventListener('touchstart', restartGame, { once: true });
-            }
-
-            // Collision detection with collectible
-            if (
-                player.x < collectible.x + collectible.width &&
-                player.x + player.width > collectible.x &&
-                player.y < collectible.y + collectible.height &&
-                player.y + player.height > collectible.y
-            ) {
-                score += 10;
-                collectible.x = canvas.width + Math.random() * 200;
-                collectible.y = Math.random() * (canvas.height - 100);
+                handleGameOver();
             }
 
             drawPlayer();
             drawObstacle();
-            drawCollectible();
             drawScore();
         }
 
@@ -180,15 +134,36 @@
             player.yVelocity = 0;
             obstacle.x = canvas.width;
             obstacle.speed = 5;
-            collectible.x = canvas.width + 200;
             score = 0;
             gameLoop = setInterval(update, 1000 / 60);
+            canvas.removeEventListener('click', restartGame);
+            canvas.removeEventListener('touchstart', restartGame);
         }
 
-        // Touch event listener
+        function handleGameOver() {
+            clearInterval(gameLoop);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '48px Arial';
+            ctx.fillText('Game Over!', canvas.width / 2 - 100, canvas.height / 2);
+            ctx.font = '24px Arial';
+            ctx.fillText('Magic Points: ' + score, canvas.width / 2 - 70, canvas.height / 2 + 40);
+            ctx.fillText('Tap or Click to restart', canvas.width / 2 - 100, canvas.height / 2 + 80);
+            canvas.addEventListener('click', restartGame, { once: true });
+            canvas.addEventListener('touchstart', restartGame, { once: true });
+        }
+
+        // Touch and keyboard event listeners
         canvas.addEventListener('touchstart', function(e) {
             e.preventDefault();
             jump();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space') {
+                jump();
+            }
         });
 
         gameLoop = setInterval(update, 1000 / 60);
