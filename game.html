@@ -64,6 +64,9 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
+        // Initialize currentBackgroundIndex
+        let currentBackgroundIndex = 0;
+
         // Load multiple background segments
         const backgrounds = [
             './background1.jpg', // First background segment
