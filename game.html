@@ -14,25 +14,59 @@
             height: 100vh;
             background-color: #87CEEB;
             font-family: Arial, sans-serif;
+            overflow: hidden; /* Prevents scrolling */
         }
         #gameCanvas {
             border: 1px solid #000;
+            touch-action: none; /* Prevents default touch actions */
+        }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+        .btn {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            line-height: 60px;
+            user-select: none;
         }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <canvas id="gameCanvas"></canvas>
+    <!-- On-screen touch controls -->
+    <div class="controls">
+        <button class="btn" id="jumpBtn">⬆️</button>
+    </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
+        // Set canvas size based on window size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
         // Load images
         const catImg = new Image();
-        catImg.src = './cat.jpg'; // Updated path
+        catImg.src = './cat.jpg';
         const backgroundImg = new Image();
-        backgroundImg.src = './background.jpg'; // Updated path
+        backgroundImg.src = './background.jpg';
         const obstacleImg = new Image();
-        obstacleImg.src = './obstacle.jpg'; // Updated path
+        obstacleImg.src = './obstacle.jpg';
 
         const player = {
             x: 50,
@@ -155,10 +189,7 @@
         }
 
         // Touch and keyboard event listeners
-        canvas.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            jump();
-        });
+        document.getElementById('jumpBtn').addEventListener('click', jump);
 
         document.addEventListener('keydown', function(e) {
             if (e.code === 'Space') {
