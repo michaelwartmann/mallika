@@ -20,7 +20,7 @@
             border: 1px solid #000;
             touch-action: none;
         }
-        .start-screen, .end-screen {
+        .start-screen {
             position: absolute;
             top: 0;
             left: 0;
@@ -78,10 +78,25 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
+        // Load multiple background segments
+        const backgrounds = [
+            './background1.jpg', // First background segment
+            './background2.jpg', // Second background segment
+            './background3.jpg'  // Third background segment
+        ].map(src => {
+            const img = new Image();
+            img.src = src;
+            return img;
+        });
+
+        let backgroundSegments = [
+            { img: backgrounds[0], x: 0 },
+            { img: backgrounds[1], x: canvas.width },
+            { img: backgrounds[2], x: canvas.width * 2 }
+        ];
+
         const catImg = new Image();
         catImg.src = './cat.jpg';
-        const backgroundImg = new Image();
-        backgroundImg.src = './background.jpg';
         const obstacleImg = new Image();
         obstacleImg.src = './obstacle.jpg';
         const partyImg = new Image();
@@ -108,15 +123,21 @@
 
         let score = 0;
         let gameLoop;
-        let backgroundX = 0;
 
         function drawBackground() {
-            ctx.drawImage(backgroundImg, backgroundX, 0, canvas.width, canvas.height);
-            ctx.drawImage(backgroundImg, backgroundX + canvas.width, 0, canvas.width, canvas.height);
-            backgroundX -= 2;
-            if (backgroundX <= -canvas.width) {
-                backgroundX = 0;
-            }
+            backgroundSegments.forEach(segment => {
+                ctx.drawImage(segment.img, segment.x, 0, canvas.width, canvas.height);
+                segment.x -= 2; // Move the background segments to the left
+            });
+
+            // Reposition backgrounds to create an endless scroll effect
+            backgroundSegments.forEach((segment, index) => {
+                if (segment.x <= -canvas.width) {
+                    // Move this segment to the end of the last one
+                    const lastSegment = backgroundSegments[(index - 1 + backgroundSegments.length) % backgroundSegments.length];
+                    segment.x = lastSegment.x + canvas.width;
+                }
+            });
         }
 
         function drawPlayer() {
