@@ -48,10 +48,10 @@
 <body>
     <div class="start-screen" id="startScreen">
         <h1>Mallika’s Magical Birthday Adventure</h1>
-        <p>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake!</p>
+        <p>Today is Mallika's birthday! She needs to collect the letters of her name and bring them to the party, help her!</p>
         <button onclick="startGame()">Start Game</button>
     </div>
-    <div id="progress">M _ A _ L _ L _ I _ K _ A</div>
+    <div id="progress">_ _ _ _ _ _ A</div>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -77,12 +77,12 @@
         });
 
         const letters = [
-            { char: 'M', x: 400, y: 300, collected: false },
-            { char: 'A', x: 700, y: 300, collected: false },
+            { char: 'M', x: 400, y: 500, collected: false },
+            { char: 'A', x: 700, y: 600, collected: false },
             { char: 'L', x: 400, y: 300, collected: false },
-            { char: 'L', x: 700, y: 300, collected: false },
+            { char: 'L', x: 700, y: 400, collected: false },
             { char: 'I', x: 400, y: 300, collected: false },
-            { char: 'K', x: 700, y: 300, collected: false },
+            { char: 'K', x: 700, y: 800, collected: false },
             { char: 'A', x: 600, y: 300, collected: false } // Last letter near the cake
         ];
 
