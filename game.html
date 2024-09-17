@@ -35,6 +35,14 @@
             text-align: center;
             z-index: 10;
         }
+        #progress {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: black;
+        }
     </style>
 </head>
 <body>
@@ -43,6 +51,7 @@
         <p>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake!</p>
         <button onclick="startGame()">Start Game</button>
     </div>
+    <div id="progress">M _ A _ L _ L _ I _ K _ A</div>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -67,12 +76,23 @@
             return img;
         });
 
-        let currentBackgroundIndex = 0;
+        const letters = [
+            { char: 'M', x: 400, y: 300, collected: false },
+            { char: 'A', x: 700, y: 300, collected: false },
+            { char: 'L', x: 400, y: 300, collected: false },
+            { char: 'L', x: 700, y: 300, collected: false },
+            { char: 'I', x: 400, y: 300, collected: false },
+            { char: 'K', x: 700, y: 300, collected: false },
+            { char: 'A', x: 600, y: 300, collected: false } // Last letter near the cake
+        ];
 
+        let currentBackgroundIndex = 0;
         const catImg = new Image();
         catImg.src = './cat.jpg';
         const obstacleImg = new Image();
         obstacleImg.src = './obstacle.jpg';
+        const cakeImg = new Image();
+        cakeImg.src = './cake.jpg'; // Image of the cake and friends
 
         const player = {
             x: 100,
@@ -83,15 +103,14 @@
             jumpStrength: 15,
             yVelocity: 0,
             isJumping: false,
-            targetX: null, // Target position where the cat should move
-            movingDirection: null // 'left' or 'right' based on movement
+            targetX: null,
+            movingDirection: null
         };
 
         let score = 0;
         let gameLoop;
 
         function drawBackground() {
-            // Draw the current background
             ctx.drawImage(backgrounds[currentBackgroundIndex], 0, 0, canvas.width, canvas.height);
         }
 
@@ -100,7 +119,19 @@
         }
 
         function drawObstacle() {
-            ctx.drawImage(obstacleImg, 600, 300, 50, 50); // Example obstacle, adjust as needed
+            if (currentBackgroundIndex < backgrounds.length - 1) {
+                ctx.drawImage(obstacleImg, 600, 300, 50, 50); // Example obstacle
+            }
+        }
+
+        function drawLetters() {
+            letters.forEach((letter, index) => {
+                if (!letter.collected && Math.floor(index / 2) === currentBackgroundIndex) {
+                    ctx.fillStyle = 'red';
+                    ctx.font = '40px Arial';
+                    ctx.fillText(letter.char, letter.x, letter.y);
+                }
+            });
         }
 
         function drawScore() {
@@ -114,6 +145,7 @@
             drawBackground();
             drawPlayer();
             drawObstacle();
+            drawLetters();
             drawScore();
 
             // Update player position
@@ -133,21 +165,32 @@
                     player.x += player.speed;
                     player.movingDirection = 'right';
                     if (player.x >= player.targetX) {
-                        player.targetX = null; // Stop moving
+                        player.targetX = null;
                     }
                 } else if (player.x > player.targetX) {
                     player.x -= player.speed;
                     player.movingDirection = 'left';
                     if (player.x <= player.targetX) {
-                        player.targetX = null; // Stop moving
+                        player.targetX = null;
                     }
                 }
             }
 
+            // Collect letters
+            letters.forEach((letter, index) => {
+                if (!letter.collected && Math.floor(index / 2) === currentBackgroundIndex &&
+                    player.x < letter.x + 20 && player.x + player.width > letter.x &&
+                    player.y < letter.y + 20 && player.y + player.height > letter.y) {
+                    letter.collected = true;
+                    score += 10;
+                    updateProgressDisplay();
+                }
+            });
+
             // Transition to next background when reaching the right edge
             if (player.x > canvas.width - 50 && currentBackgroundIndex < backgrounds.length - 1) {
                 currentBackgroundIndex++;
-                player.x = 50; // Reset player position to the start of the next background
+                player.x = 50;
             }
 
             // Check if player reaches the last frame
@@ -160,7 +203,6 @@
             if (!player.isJumping) {
                 player.yVelocity = -player.jumpStrength;
                 player.isJumping = true;
-                // Apply horizontal movement during jump
                 if (player.movingDirection === 'left') {
                     player.x -= player.speed;
                 } else if (player.movingDirection === 'right') {
@@ -171,11 +213,17 @@
 
         function reachParty() {
             clearInterval(gameLoop);
+            ctx.drawImage(cakeImg, canvas.width - 150, 250, 100, 100);
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
             ctx.font = '48px Arial';
             ctx.fillText('You made it to the party!', canvas.width / 2 - 180, canvas.height / 2 + 150);
+        }
+
+        function updateProgressDisplay() {
+            const collectedLetters = letters.map(letter => (letter.collected ? letter.char : '_')).join(' ');
+            document.getElementById('progress').innerText = collectedLetters;
         }
 
         function handleTouchStart(e) {
@@ -187,7 +235,6 @@
                 const moveX = event.changedTouches[0].pageX;
                 const moveY = event.changedTouches[0].pageY;
 
-                // Detect explicit upward swipe for jump
                 if (moveY < startY - 30 && Math.abs(moveX - startX) < 30) {
                     jump();
                     canvas.removeEventListener('touchmove', move);
@@ -197,8 +244,6 @@
 
         function handleTap(e) {
             const touchX = e.changedTouches[0].pageX;
-
-            // Set the new target position and direction based on the click
             player.targetX = touchX;
             player.movingDirection = touchX < player.x ? 'left' : 'right';
         }
