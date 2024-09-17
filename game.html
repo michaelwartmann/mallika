@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magical Cat Adventure</title>
+    <title>Mallika’s Magical Birthday Adventure</title>
     <style>
         body {
             margin: 0;
@@ -14,11 +14,26 @@
             height: 100vh;
             background-color: #87CEEB;
             font-family: Arial, sans-serif;
-            overflow: hidden; /* Prevents scrolling */
+            overflow: hidden;
         }
         #gameCanvas {
             border: 1px solid #000;
-            touch-action: none; /* Prevents default touch actions */
+            touch-action: none;
+        }
+        .start-screen, .end-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
         }
         .controls {
             position: fixed;
@@ -43,8 +58,12 @@
     </style>
 </head>
 <body>
+    <div class="start-screen" id="startScreen">
+        <h1>Mallika’s Magical Birthday Adventure</h1>
+        <p>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake!</p>
+        <button onclick="startGame()">Start Game</button>
+    </div>
     <canvas id="gameCanvas"></canvas>
-    <!-- On-screen touch controls -->
     <div class="controls">
         <button class="btn" id="jumpBtn">⬆️</button>
     </div>
@@ -52,7 +71,6 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Set canvas size based on window size
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -60,13 +78,14 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Load images
         const catImg = new Image();
         catImg.src = './cat.jpg';
         const backgroundImg = new Image();
         backgroundImg.src = './background.jpg';
         const obstacleImg = new Image();
         obstacleImg.src = './obstacle.jpg';
+        const partyImg = new Image();
+        partyImg.src = './party.jpg'; // Image of friends at the party
 
         const player = {
             x: 50,
@@ -115,33 +134,25 @@
         }
 
         function update() {
-            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             drawBackground();
 
-            // Update player position
             player.y += player.yVelocity;
-            player.yVelocity += 0.8; // Gravity
+            player.yVelocity += 0.8;
 
-            // Ground collision
             if (player.y + player.height > canvas.height - 50) {
                 player.y = canvas.height - player.height - 50;
                 player.yVelocity = 0;
                 player.isJumping = false;
             }
 
-            // Update obstacle position
             obstacle.x -= obstacle.speed;
-
-            // Reset obstacle when it goes off-screen
             if (obstacle.x + obstacle.width < 0) {
                 obstacle.x = canvas.width;
                 obstacle.y = 300;
-                obstacle.speed += 0.5; // Increase speed for difficulty
+                obstacle.speed += 0.5;
             }
 
-            // Collision detection with obstacle
             if (
                 player.x < obstacle.x + obstacle.width &&
                 player.x + player.width > obstacle.x &&
@@ -149,6 +160,10 @@
                 player.y + player.height > obstacle.y
             ) {
                 handleGameOver();
+            }
+
+            if (player.x > canvas.width - 100) {
+                reachParty();
             }
 
             drawPlayer();
@@ -163,15 +178,19 @@
             }
         }
 
-        function restartGame() {
-            player.y = 300;
-            player.yVelocity = 0;
-            obstacle.x = canvas.width;
-            obstacle.speed = 5;
-            score = 0;
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
             gameLoop = setInterval(update, 1000 / 60);
-            canvas.removeEventListener('click', restartGame);
-            canvas.removeEventListener('touchstart', restartGame);
+        }
+
+        function reachParty() {
+            clearInterval(gameLoop);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(partyImg, canvas.width / 2 - 100, canvas.height / 2 - 100, 200, 200);
+            ctx.fillStyle = 'white';
+            ctx.font = '48px Arial';
+            ctx.fillText('You made it to the party!', canvas.width / 2 - 180, canvas.height / 2 + 150);
         }
 
         function handleGameOver() {
@@ -181,23 +200,14 @@
             ctx.fillStyle = 'white';
             ctx.font = '48px Arial';
             ctx.fillText('Game Over!', canvas.width / 2 - 100, canvas.height / 2);
-            ctx.font = '24px Arial';
-            ctx.fillText('Magic Points: ' + score, canvas.width / 2 - 70, canvas.height / 2 + 40);
-            ctx.fillText('Tap or Click to restart', canvas.width / 2 - 100, canvas.height / 2 + 80);
-            canvas.addEventListener('click', restartGame, { once: true });
-            canvas.addEventListener('touchstart', restartGame, { once: true });
         }
 
-        // Touch and keyboard event listeners
         document.getElementById('jumpBtn').addEventListener('click', jump);
-
         document.addEventListener('keydown', function(e) {
             if (e.code === 'Space') {
                 jump();
             }
         });
-
-        gameLoop = setInterval(update, 1000 / 60);
     </script>
 </body>
 </html>
