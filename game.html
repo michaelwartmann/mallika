@@ -180,7 +180,7 @@
             const img = new Image();
             img.src = animalType.img;
             const x = canvas.width;
-            const y = animalType.type === 'dog' ? canvas.height - 60 : Math.random() * 200; // dogs on ground, eagles fly
+            const y = animalType.type === 'dog' ? canvas.height - 90 : Math.random() * 200; // dogs on ground, eagles fly
             activeAnimals.push({ type: animalType.type, img, x, y, width: animalType.width, height: animalType.height });
         }
 
