@@ -189,9 +189,9 @@
             activeAnimals.forEach(animal => {
                 ctx.drawImage(animal.img, animal.x, animal.y, animal.width, animal.height);
                 if (animal.type === 'dog') {
-                    animal.x -= 2; // Speed of dogs
+                    animal.x -= 3; // Speed of dogs
                 } else if (animal.type === 'eagle') {
-                    animal.x -= 3; // Speed of eagles
+                    animal.x -= 4; // Speed of eagles
                 }
             });
             activeAnimals = activeAnimals.filter(animal => animal.x + animal.width > 0); // Remove animals off-screen
