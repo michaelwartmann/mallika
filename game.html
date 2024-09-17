@@ -134,6 +134,11 @@
         let score = 0;
         let gameLoop;
 
+        // Load and loop the background music
+        const music = new Audio('./bday.mp3');
+        music.loop = true; // Enable looping
+        music.volume = 0.5; // Set volume as needed
+
         function drawBackground() {
             ctx.drawImage(backgrounds[currentBackgroundIndex], 0, 0, canvas.width, canvas.height);
         }
@@ -272,6 +277,7 @@
 
         function startGame() {
             document.getElementById('startScreen').style.display = 'none';
+            music.play(); // Start playing music when the game starts
             gameLoop = setInterval(update, 1000 / 60);
         }
 
