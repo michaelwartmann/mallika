@@ -48,10 +48,10 @@
 <body>
     <div class="start-screen" id="startScreen">
         <h1>Mallika’s Magical Birthday Adventure</h1>
-        <p>Today is Mallika's birthday! She needs to collect the letters of her name and bring them to the party, help her!</p>
+        <p>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake!</p>
         <button onclick="startGame()">Start Game</button>
     </div>
-    <div id="progress">_ _ _ _ _ _ A</div>
+    <div id="progress">M _ A _ L _ L _ I _ K _ A</div>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -76,23 +76,44 @@
             return img;
         });
 
-        const letters = [
-            { char: 'M', x: 400, y: 500, collected: false },
-            { char: 'A', x: 700, y: 600, collected: false },
-            { char: 'L', x: 400, y: 300, collected: false },
-            { char: 'L', x: 700, y: 400, collected: false },
-            { char: 'I', x: 400, y: 300, collected: false },
-            { char: 'K', x: 700, y: 800, collected: false },
-            { char: 'A', x: 600, y: 300, collected: false } // Last letter near the cake
+        const objects = [
+            // Screen 1 Objects
+            [
+                { type: 'obstacle', x: 300, y: 350, width: 50, height: 50 },
+                { type: 'platform', x: 500, y: 300, width: 100, height: 20 },
+                { type: 'letter', char: 'M', x: 400, y: 280 },
+                { type: 'letter', char: 'A', x: 600, y: 280 }
+            ],
+            // Screen 2 Objects
+            [
+                { type: 'obstacle', x: 200, y: 350, width: 50, height: 50 },
+                { type: 'platform', x: 400, y: 250, width: 100, height: 20 },
+                { type: 'letter', char: 'L', x: 450, y: 230 },
+                { type: 'letter', char: 'L', x: 650, y: 230 }
+            ],
+            // Screen 3 Objects
+            [
+                { type: 'obstacle', x: 500, y: 350, width: 50, height: 50 },
+                { type: 'platform', x: 700, y: 280, width: 100, height: 20 },
+                { type: 'letter', char: 'I', x: 720, y: 260 },
+                { type: 'letter', char: 'K', x: 520, y: 260 }
+            ],
+            // Screen 4 Objects
+            [
+                { type: 'platform', x: 600, y: 280, width: 100, height: 20 },
+                { type: 'letter', char: 'A', x: 620, y: 260 },
+                { type: 'cake', x: 750, y: 300, width: 100, height: 100 } // Final goal
+            ]
         ];
 
-        let currentBackgroundIndex = 0;
         const catImg = new Image();
         catImg.src = './cat.jpg';
         const obstacleImg = new Image();
         obstacleImg.src = './obstacle.jpg';
+        const platformImg = new Image(); // Platform can be visualized as needed
+        platformImg.src = './platform.jpg'; // Use a placeholder or create a simple platform image
         const cakeImg = new Image();
-        cakeImg.src = './cake.jpg'; // Image of the cake and friends
+        cakeImg.src = './cake.jpg'; // Image of the cake with friends
 
         const player = {
             x: 100,
@@ -118,18 +139,23 @@
             ctx.drawImage(catImg, player.x, player.y, player.width, player.height);
         }
 
-        function drawObstacle() {
-            if (currentBackgroundIndex < backgrounds.length - 1) {
-                ctx.drawImage(obstacleImg, 600, 300, 50, 50); // Example obstacle
-            }
-        }
-
-        function drawLetters() {
-            letters.forEach((letter, index) => {
-                if (!letter.collected && Math.floor(index / 2) === currentBackgroundIndex) {
-                    ctx.fillStyle = 'red';
-                    ctx.font = '40px Arial';
-                    ctx.fillText(letter.char, letter.x, letter.y);
+        function drawObjects() {
+            objects[currentBackgroundIndex].forEach(obj => {
+                switch (obj.type) {
+                    case 'obstacle':
+                        ctx.drawImage(obstacleImg, obj.x, obj.y, obj.width, obj.height);
+                        break;
+                    case 'platform':
+                        ctx.drawImage(platformImg, obj.x, obj.y, obj.width, obj.height);
+                        break;
+                    case 'letter':
+                        ctx.fillStyle = 'red';
+                        ctx.font = '40px Arial';
+                        ctx.fillText(obj.char, obj.x, obj.y);
+                        break;
+                    case 'cake':
+                        ctx.drawImage(cakeImg, obj.x, obj.y, obj.width, obj.height);
+                        break;
                 }
             });
         }
@@ -144,22 +170,18 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
             drawPlayer();
-            drawObstacle();
-            drawLetters();
+            drawObjects();
             drawScore();
 
-            // Update player position
             player.y += player.yVelocity;
             player.yVelocity += 0.8; // Gravity
 
-            // Ground collision
             if (player.y + player.height > canvas.height - 50) {
                 player.y = canvas.height - player.height - 50;
                 player.yVelocity = 0;
                 player.isJumping = false;
             }
 
-            // Move the player towards the targetX
             if (player.targetX !== null) {
                 if (player.x < player.targetX) {
                     player.x += player.speed;
@@ -176,24 +198,21 @@
                 }
             }
 
-            // Collect letters
-            letters.forEach((letter, index) => {
-                if (!letter.collected && Math.floor(index / 2) === currentBackgroundIndex &&
-                    player.x < letter.x + 20 && player.x + player.width > letter.x &&
-                    player.y < letter.y + 20 && player.y + player.height > letter.y) {
-                    letter.collected = true;
+            objects[currentBackgroundIndex].forEach(obj => {
+                if (obj.type === 'letter' && !obj.collected && 
+                    player.x < obj.x + 20 && player.x + player.width > obj.x &&
+                    player.y < obj.y + 20 && player.y + player.height > obj.y) {
+                    obj.collected = true;
                     score += 10;
                     updateProgressDisplay();
                 }
             });
 
-            // Transition to next background when reaching the right edge
             if (player.x > canvas.width - 50 && currentBackgroundIndex < backgrounds.length - 1) {
                 currentBackgroundIndex++;
                 player.x = 50;
             }
 
-            // Check if player reaches the last frame
             if (currentBackgroundIndex === backgrounds.length - 1 && player.x > canvas.width - 150) {
                 reachParty();
             }
@@ -222,7 +241,7 @@
         }
 
         function updateProgressDisplay() {
-            const collectedLetters = letters.map(letter => (letter.collected ? letter.char : '_')).join(' ');
+            const collectedLetters = objects.flat().filter(obj => obj.type === 'letter').map(letter => (letter.collected ? letter.char : '_')).join(' ');
             document.getElementById('progress').innerText = collectedLetters;
         }
 
