@@ -51,7 +51,7 @@
         <p>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake!</p>
         <button onclick="startGame()">Start Game</button>
     </div>
-    <div id="progress">_ _ _ _ _ _</div>
+    <div id="progress">€0</div>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -77,6 +77,33 @@
             img.src = src;
             return img;
         });
+
+        // Collectibles and euro bills spread over 4 screens
+        const collectibles = [
+            // Screen 1
+            { type: 'euro', x: 100, y: 200, collected: false },
+            { type: 'euro', x: 200, y: 250, collected: false },
+            { type: 'euro', x: 300, y: 220, collected: false },
+            { type: 'euro', x: 500, y: 180, collected: false },
+            { type: 'euro', x: 700, y: 200, collected: false },
+            // Screen 2
+            { type: 'euro', x: 100, y: 150, collected: false },
+            { type: 'euro', x: 300, y: 280, collected: false },
+            { type: 'euro', x: 450, y: 230, collected: false },
+            { type: 'euro', x: 600, y: 260, collected: false },
+            { type: 'euro', x: 750, y: 210, collected: false },
+            // Screen 3
+            { type: 'euro', x: 120, y: 260, collected: false },
+            { type: 'euro', x: 250, y: 220, collected: false },
+            { type: 'euro', x: 400, y: 240, collected: false },
+            { type: 'euro', x: 600, y: 200, collected: false },
+            { type: 'euro', x: 700, y: 180, collected: false },
+            // Screen 4
+            { type: 'euro', x: 150, y: 260, collected: false },
+            { type: 'euro', x: 350, y: 250, collected: false },
+            { type: 'euro', x: 550, y: 220, collected: false },
+            { type: 'euro', x: 700, y: 270, collected: false }
+        ];
 
         const objects = [
             // Screen 1 Objects
@@ -107,7 +134,7 @@
             [
                 { type: 'platform', x: 600, y: 280, width: 100, height: 20 },
                 { type: 'letter', char: 'A', x: 620, y: 260 },
-                { type: 'cake', x: 750, y: 300, width: 100, height: 100 }
+                { type: 'cake', x: 500, y: 250, width: 100, height: 100 }
             ]
         ];
 
@@ -119,20 +146,23 @@
         platformImg.src = './platform.png';
         const cakeImg = new Image();
         cakeImg.src = './cake.png';
+        const euroImg = new Image();
+        euroImg.src = './euro.jpg'; // Euro bill image
 
-        const animals = [
-            { type: 'dog', img: './dog.png', width: 60, height: 40 },
-            { type: 'eagle', img: './eagle.png', width: 60, height: 40 }
+        // Friends and animals near the cake
+        const friends = [
+            { img: './vallari.png', x: 550, y: 250, width: 50, height: 50 },
+            { img: './eleonora.png', x: 650, y: 250, width: 50, height: 50 },
+            { img: './dog.png', x: 500, y: 300, width: 60, height: 40 },
+            { img: './eagle.png', x: 600, y: 220, width: 60, height: 40 }
         ];
-
-        let activeAnimals = [];
 
         const player = {
             x: 100,
             y: 300,
             width: 50,
             height: 50,
-            speed: 5,
+            speed: 3.5, // Reduced speed by ~30%
             jumpStrength: 15,
             yVelocity: 0,
             isJumping: false,
@@ -141,7 +171,9 @@
         };
 
         let score = 0;
+        let cashCollected = 0;
         let gameLoop;
+        const cashSound = new Audio('./cash.mp3'); // "kaching" sound
 
         const music = new Audio('./bday.mp3');
         music.loop = true;
@@ -171,70 +203,48 @@
                         break;
                     case 'cake':
                         ctx.drawImage(cakeImg, obj.x, obj.y, obj.width, obj.height);
+                        drawFriends(); // Draw friends and animals around the cake
                         break;
                 }
             });
         }
 
-        function spawnAnimal() {
-            const animalType = animals[Math.floor(Math.random() * animals.length)];
-            const img = new Image();
-            img.src = animalType.img;
-            const x = canvas.width;
-            const y = animalType.type === 'dog' ? canvas.height - 100 : Math.random() * 200; // dogs on ground, eagles fly
-            activeAnimals.push({ type: animalType.type, img, x, y, width: animalType.width, height: animalType.height });
-        }
-
-        function drawAnimals() {
-            activeAnimals.forEach(animal => {
-                ctx.drawImage(animal.img, animal.x, animal.y, animal.width, animal.height);
-                if (animal.type === 'dog') {
-                    animal.x -= 2; // Speed of dogs
-                } else if (animal.type === 'eagle') {
-                    animal.x -= 3; // Speed of eagles
-                }
+        function drawFriends() {
+            friends.forEach(friend => {
+                const img = new Image();
+                img.src = friend.img;
+                ctx.drawImage(img, friend.x, friend.y, friend.width, friend.height);
             });
-            activeAnimals = activeAnimals.filter(animal => animal.x + animal.width > 0); // Remove animals off-screen
         }
 
-        function checkPlatformCollision() {
-            objects[currentBackgroundIndex].forEach(obj => {
-                if (obj.type === 'platform' &&
-                    player.x < obj.x + obj.width &&
-                    player.x + player.width > obj.x &&
-                    player.y + player.height > obj.y &&
-                    player.y + player.height < obj.y + obj.height + 20) {
-                    player.y = obj.y - player.height;
-                    player.yVelocity = 0;
-                    player.isJumping = false;
+        function drawCollectibles() {
+            collectibles.forEach(item => {
+                if (!item.collected && Math.floor(item.x / canvas.width) === currentBackgroundIndex) {
+                    ctx.drawImage(euroImg, item.x % canvas.width, item.y, 30, 20);
                 }
             });
         }
 
-        function checkAnimalCollision() {
-            activeAnimals.forEach(animal => {
-                if (
-                    player.x < animal.x + animal.width &&
-                    player.x + player.width > animal.x &&
-                    player.y < animal.y + animal.height &&
-                    player.y + player.height > animal.y
-                ) {
-                    resetScreen(); // Restart current screen
+        function collectCash() {
+            collectibles.forEach(item => {
+                if (!item.collected &&
+                    Math.floor(item.x / canvas.width) === currentBackgroundIndex &&
+                    player.x < item.x % canvas.width + 20 &&
+                    player.x + player.width > item.x % canvas.width &&
+                    player.y < item.y + 20 &&
+                    player.y + player.height > item.y) {
+                    item.collected = true;
+                    cashCollected += 5;
+                    cashSound.play();
+                    updateProgressDisplay();
                 }
             });
-        }
-
-        function resetScreen() {
-            player.x = 100;
-            player.y = 300;
-            player.yVelocity = 0;
-            activeAnimals = [];
         }
 
         function drawScore() {
             ctx.fillStyle = 'black';
             ctx.font = '24px Arial';
-            ctx.fillText('Magic Points: ' + score, 10, 30);
+            ctx.fillText('€' + cashCollected, 10, 30);
         }
 
         function update() {
@@ -242,7 +252,7 @@
             drawBackground();
             drawPlayer();
             drawObjects();
-            drawAnimals();
+            drawCollectibles();
             drawScore();
 
             player.y += player.yVelocity;
@@ -255,7 +265,7 @@
             }
 
             checkPlatformCollision();
-            checkAnimalCollision();
+            collectCash();
 
             if (player.targetX !== null) {
                 if (player.x < player.targetX) {
@@ -283,14 +293,18 @@
                 }
             });
 
-            // Adjusted transition boundary
-            if (player.x > canvas.width - 100 && currentBackgroundIndex < backgrounds.length - 1) {
-                currentBackgroundIndex++;
-                resetScreen();
-            }
-
-            if (currentBackgroundIndex === backgrounds.length - 1 && player.x > canvas.width - 150) {
-                reachParty();
+            if (player.x > canvas.width - 100) {
+                if (currentBackgroundIndex < backgrounds.length - 1) {
+                    currentBackgroundIndex++;
+                    resetScreen();
+                } else if (cashCollected >= 150) {
+                    reachParty();
+                }
+            } else if (player.x < 0) {
+                if (currentBackgroundIndex > 0) {
+                    currentBackgroundIndex--;
+                    player.x = canvas.width - 50; // Position player on the right edge of the previous screen
+                }
             }
         }
 
@@ -298,11 +312,7 @@
             if (!player.isJumping) {
                 player.yVelocity = -player.jumpStrength;
                 player.isJumping = true;
-                if (player.movingDirection === 'left') {
-                    player.x -= player.speed;
-                } else if (player.movingDirection === 'right') {
-                    player.x += player.speed;
-                }
+                player.targetX = null; // Stop player after jump
             }
         }
 
@@ -314,11 +324,13 @@
             ctx.fillStyle = 'white';
             ctx.font = '48px Arial';
             ctx.fillText('You made it to the party!', canvas.width / 2 - 180, canvas.height / 2 + 150);
+            if (cashCollected >= 150) {
+                ctx.fillText('You can go to Ichiba with your friends!', canvas.width / 2 - 250, canvas.height / 2 + 200);
+            }
         }
 
         function updateProgressDisplay() {
-            const collectedLetters = objects.flat().filter(obj => obj.type === 'letter').map(letter => (letter.collected ? letter.char : '_')).join(' ');
-            document.getElementById('progress').innerText = collectedLetters;
+            document.getElementById('progress').innerText = `€${cashCollected}`;
         }
 
         function handleTouchStart(e) {
@@ -347,7 +359,7 @@
             document.getElementById('startScreen').style.display = 'none';
             music.play();
             gameLoop = setInterval(update, 1000 / 60);
-            setInterval(spawnAnimal, 3000); // Spawn a new animal every 3 seconds
+            setInterval(spawnAnimal, 3000);
         }
 
         canvas.addEventListener('touchstart', handleTouchStart);
