@@ -90,12 +90,8 @@
         let gameLoop;
 
         function drawBackground() {
-            // Draw the current and next background
+            // Draw the current background
             ctx.drawImage(backgrounds[currentBackgroundIndex], backgroundX, 0, canvas.width, canvas.height);
-            if (backgroundX <= -canvas.width && currentBackgroundIndex < backgrounds.length - 1) {
-                currentBackgroundIndex++;
-                backgroundX = 0;
-            }
         }
 
         function drawPlayer() {
@@ -130,6 +126,12 @@
                 player.isJumping = false;
             }
 
+            // Transition to next background when reaching the right edge
+            if (player.x > canvas.width - 50 && currentBackgroundIndex < backgrounds.length - 1) {
+                currentBackgroundIndex++;
+                player.x = 50; // Reset player position to the start of the next background
+            }
+
             // Check if player reaches the last frame
             if (currentBackgroundIndex === backgrounds.length - 1 && player.x > canvas.width - 150) {
                 reachParty();
@@ -154,23 +156,30 @@
 
         function handleSwipe(e) {
             const touch = e.changedTouches[0];
-            if (touch) {
-                // Calculate the direction and distance of the swipe
-                let direction = touch.clientX - canvas.width / 2;
-                if (direction > 20) {
-                    // Swipe right
-                    player.x += player.speed;
-                } else if (direction < -20) {
-                    // Swipe left
-                    player.x -= player.speed;
+            const startX = touch.pageX;
+            const startY = touch.pageY;
+
+            canvas.addEventListener('touchmove', function move(event) {
+                const moveX = event.changedTouches[0].pageX;
+                const moveY = event.changedTouches[0].pageY;
+
+                // Detect swipe up for jump
+                if (moveY < startY - 30) {
+                    jump();
+                    canvas.removeEventListener('touchmove', move);
                 }
-            }
+            });
         }
 
         function handleTouch(e) {
-            e.preventDefault();
-            if (e.type === 'touchstart') {
-                jump();
+            const touch = e.changedTouches[0];
+            const touchX = touch.pageX;
+
+            // Move left or right based on touch position
+            if (touchX < canvas.width / 2) {
+                player.x -= player.speed; // Move left
+            } else {
+                player.x += player.speed; // Move right
             }
         }
 
@@ -179,8 +188,8 @@
             gameLoop = setInterval(update, 1000 / 60);
         }
 
+        canvas.addEventListener('touchstart', handleSwipe);
         canvas.addEventListener('touchstart', handleTouch);
-        canvas.addEventListener('touchmove', handleSwipe);
     </script>
 </body>
 </html>
