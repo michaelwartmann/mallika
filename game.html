@@ -64,15 +64,14 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Initialize currentBackgroundIndex
         let currentBackgroundIndex = 0;
 
         // Load multiple background segments
         const backgrounds = [
-            './background1.jpg', // First background segment
-            './background2.jpg', // Second background segment
-            './background3.jpg', // Third background segment
-            './background4.jpg'  // Fourth background segment with the party setup
+            './background1.jpg',
+            './background2.jpg',
+            './background3.jpg',
+            './background4.jpg'
         ].map(src => {
             const img = new Image();
             img.src = src;
@@ -105,7 +104,7 @@
             [
                 { type: 'platform', x: 600, y: 280, width: 100, height: 20 },
                 { type: 'letter', char: 'A', x: 620, y: 260 },
-                { type: 'cake', x: 750, y: 300, width: 100, height: 100 } // Final goal
+                { type: 'cake', x: 750, y: 300, width: 100, height: 100 }
             ]
         ];
 
@@ -113,10 +112,17 @@
         catImg.src = './cat.jpg';
         const obstacleImg = new Image();
         obstacleImg.src = './obstacle.jpg';
-        const platformImg = new Image(); // Platform can be visualized as needed
-        platformImg.src = './platform.jpg'; // Use a placeholder or create a simple platform image
+        const platformImg = new Image();
+        platformImg.src = './platform.jpg';
         const cakeImg = new Image();
-        cakeImg.src = './cake.jpg'; // Image of the cake with friends
+        cakeImg.src = './cake.jpg';
+
+        const animals = [
+            { type: 'dog', img: './dog.jpg', width: 60, height: 40 },
+            { type: 'eagle', img: './eagle.jpg', width: 60, height: 40 }
+        ];
+
+        let activeAnimals = [];
 
         const player = {
             x: 100,
@@ -134,10 +140,9 @@
         let score = 0;
         let gameLoop;
 
-        // Load and loop the background music
         const music = new Audio('./bday.mp3');
-        music.loop = true; // Enable looping
-        music.volume = 0.5; // Set volume as needed
+        music.loop = true;
+        music.volume = 0.5;
 
         function drawBackground() {
             ctx.drawImage(backgrounds[currentBackgroundIndex], 0, 0, canvas.width, canvas.height);
@@ -168,6 +173,61 @@
             });
         }
 
+        function spawnAnimal() {
+            const animalType = animals[Math.floor(Math.random() * animals.length)];
+            const img = new Image();
+            img.src = animalType.img;
+            const x = Math.random() * canvas.width;
+            const y = animalType.type === 'dog' ? canvas.height - 60 : Math.random() * 200; // dogs on ground, eagles fly
+            activeAnimals.push({ type: animalType.type, img, x, y, width: animalType.width, height: animalType.height });
+        }
+
+        function drawAnimals() {
+            activeAnimals.forEach(animal => {
+                ctx.drawImage(animal.img, animal.x, animal.y, animal.width, animal.height);
+                if (animal.type === 'dog') {
+                    animal.x -= 2; // Speed of dogs
+                } else if (animal.type === 'eagle') {
+                    animal.x -= 3; // Speed of eagles
+                }
+            });
+            activeAnimals = activeAnimals.filter(animal => animal.x + animal.width > 0); // Remove animals off-screen
+        }
+
+        function checkPlatformCollision() {
+            objects[currentBackgroundIndex].forEach(obj => {
+                if (obj.type === 'platform' &&
+                    player.x < obj.x + obj.width &&
+                    player.x + player.width > obj.x &&
+                    player.y + player.height > obj.y &&
+                    player.y + player.height < obj.y + obj.height + 20) {
+                    player.y = obj.y - player.height;
+                    player.yVelocity = 0;
+                    player.isJumping = false;
+                }
+            });
+        }
+
+        function checkAnimalCollision() {
+            activeAnimals.forEach(animal => {
+                if (
+                    player.x < animal.x + animal.width &&
+                    player.x + player.width > animal.x &&
+                    player.y < animal.y + animal.height &&
+                    player.y + player.height > animal.y
+                ) {
+                    resetScreen(); // Restart current screen
+                }
+            });
+        }
+
+        function resetScreen() {
+            player.x = 100;
+            player.y = 300;
+            player.yVelocity = 0;
+            activeAnimals = [];
+        }
+
         function drawScore() {
             ctx.fillStyle = 'black';
             ctx.font = '24px Arial';
@@ -179,16 +239,20 @@
             drawBackground();
             drawPlayer();
             drawObjects();
+            drawAnimals();
             drawScore();
 
             player.y += player.yVelocity;
-            player.yVelocity += 0.8; // Gravity
+            player.yVelocity += 0.8;
 
             if (player.y + player.height > canvas.height - 50) {
                 player.y = canvas.height - player.height - 50;
                 player.yVelocity = 0;
                 player.isJumping = false;
             }
+
+            checkPlatformCollision();
+            checkAnimalCollision();
 
             if (player.targetX !== null) {
                 if (player.x < player.targetX) {
@@ -207,7 +271,7 @@
             }
 
             objects[currentBackgroundIndex].forEach(obj => {
-                if (obj.type === 'letter' && !obj.collected && 
+                if (obj.type === 'letter' && !obj.collected &&
                     player.x < obj.x + 20 && player.x + player.width > obj.x &&
                     player.y < obj.y + 20 && player.y + player.height > obj.y) {
                     obj.collected = true;
@@ -216,9 +280,10 @@
                 }
             });
 
-            if (player.x > canvas.width - 50 && currentBackgroundIndex < backgrounds.length - 1) {
+            // Adjusted transition boundary
+            if (player.x > canvas.width - 100 && currentBackgroundIndex < backgrounds.length - 1) {
                 currentBackgroundIndex++;
-                player.x = 50;
+                resetScreen();
             }
 
             if (currentBackgroundIndex === backgrounds.length - 1 && player.x > canvas.width - 150) {
@@ -277,8 +342,9 @@
 
         function startGame() {
             document.getElementById('startScreen').style.display = 'none';
-            music.play(); // Start playing music when the game starts
+            music.play();
             gameLoop = setInterval(update, 1000 / 60);
+            setInterval(spawnAnimal, 3000); // Spawn a new animal every 3 seconds
         }
 
         canvas.addEventListener('touchstart', handleTouchStart);
