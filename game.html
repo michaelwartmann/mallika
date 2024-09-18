@@ -337,23 +337,19 @@
 
             checkPlatformCollision();
             checkAnimalCollision();
+            checkObstacleCollision();
 
             // Handle movement
             if (player.targetX !== null) {
                 if (player.x < player.targetX) {
-                    player.x += player.speed;
                     player.movingDirection = 'right';
-                    if (player.x >= player.targetX) {
-                        player.targetX = null;
-                    }
                 } else if (player.x > player.targetX) {
-                    player.x -= player.speed;
                     player.movingDirection = 'left';
-                    if (player.x <= player.targetX) {
-                        player.targetX = null;
-                    }
                 }
+            } else {
+                player.movingDirection = null;
             }
+
 
             // Collect letters
             objects[currentBackgroundIndex].forEach(obj => {
@@ -412,6 +408,51 @@
             }
         }
 
+        function checkObstacleCollision() {
+            // Predict player's next position
+            let nextX = player.x;
+            let nextY = player.y;
+
+            // Determine movement direction
+            let deltaX = 0;
+            if (player.movingDirection === 'left') {
+                deltaX = -player.speed;
+            } else if (player.movingDirection === 'right') {
+                deltaX = player.speed;
+            }
+            nextX += deltaX;
+
+            // Check for collisions with obstacles
+            let collision = false;
+            objects[currentBackgroundIndex].forEach(obj => {
+                if (obj.type === 'obstacle') {
+                    if (
+                        nextX < obj.x + obj.width &&
+                        nextX + player.width > obj.x &&
+                        nextY < obj.y + obj.height &&
+                        nextY + player.height > obj.y
+                    ) {
+                        collision = true;
+                        // Stop player movement
+                        if (deltaX > 0) {
+                            // Moving right; align player to the left of the obstacle
+                            player.x = obj.x - player.width;
+                        } else if (deltaX < 0) {
+                            // Moving left; align player to the right of the obstacle
+                            player.x = obj.x + obj.width;
+                        }
+                        player.targetX = null;
+                    }
+                }
+            });
+
+            if (!collision) {
+                // No collision; update player position
+                player.x = nextX;
+            }
+        }
+
+        
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const words = text.split(' ');
             let line = '';
