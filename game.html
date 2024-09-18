@@ -47,7 +47,7 @@
 <body>
     <div class="start-screen" id="startScreen">
         <h1>Mallika’s Magical Birthday Adventure</h1>
-        <p>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake! (Flip your screen sideways)</p>
+        <h2>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake! (Flip your screen sideways)</h2>
         <button onclick="startGame()">Start Game</button>
     </div>
     <div id="progress">_ _ _ _ _ _ _</div>
@@ -103,9 +103,9 @@
             // Screen 3
             [
                 { type: 'obstacle', x: 150, y: 250, width: 50, height: 50 },
-                { type: 'platform', x: 250, y: 150, width: 100, height: 20, moving: 'horizontal' },
-                { type: 'platform', x: 400, y: 100, width: 100, height: 20 },
-                { type: 'platform', x: 550, y: 80, width: 100, height: 20, moving: 'vertical' },
+                { type: 'platform', x: 250, y: 200, width: 100, height: 20, moving: 'horizontal' },
+                { type: 'platform', x: 400, y: 150, width: 100, height: 20 },
+                { type: 'platform', x: 550, y: 100, width: 100, height: 20, moving: 'vertical' },
                 { type: 'letter', char: 'I', x: 570, y: 50 },
                 { type: 'obstacle', x: 700, y: 250, width: 50, height: 50 },
                 { type: 'letter', char: 'K', x: 730, y: 120 }
@@ -114,10 +114,9 @@
             [
                 { type: 'obstacle', x: 100, y: 250, width: 70, height: 70 },
                 { type: 'obstacle', x: 300, y: 250, width: 50, height: 50 },
-                { type: 'platform', x: 400, y: 130, width: 100, height: 20 },
+                { type: 'platform', x: 400, y: 180, width: 100, height: 20 },
                 { type: 'obstacle', x: 550, y: 250, width: 50, height: 50 },
-                { type: 'platform', x: 600, y: 100, width: 80, height: 20 },
-                { type: 'cake', x: 500, y: 200, width: 100, height: 100 },
+                { type: 'platform', x: 600, y: 130, width: 80, height: 20 },
                 { type: 'letter', char: 'A', x: 650, y: 70 }
             ]
         ];
