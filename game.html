@@ -147,9 +147,9 @@
         // Define their positions on the final screen
         const finalScreenCharacters = [
             { img: vallariImg, x: 550, y: 250, width: 50, height: 50 },
-            { img: eleonoraImg, x: 650, y: 250, width: 50, height: 50 },
-            { img: dogImg, x: 500, y: 300, width: 60, height: 40 },
-            { img: eagleImg, x: 600, y: 220, width: 60, height: 40 }
+            { img: eleonoraImg, x: 600, y: 250, width: 50, height: 50 },
+            { img: dogImg, x: 400, y: 250, width: 60, height: 40 },
+            { img: eagleImg, x: 300, y: 220, width: 60, height: 40 }
         ];
 
         const animals = [
@@ -229,9 +229,9 @@
             activeAnimals.forEach(animal => {
                 ctx.drawImage(animal.img, animal.x, animal.y, animal.width, animal.height);
                 if (animal.type === 'dog') {
-                    animal.x -= 2; // Speed of dogs
+                    animal.x -= 3; // Speed of dogs
                 } else if (animal.type === 'eagle') {
-                    animal.x -= 3; // Speed of eagles
+                    animal.x -= 4; // Speed of eagles
                 }
             });
             activeAnimals = activeAnimals.filter(animal => animal.x + animal.width > 0); // Remove animals off-screen
@@ -360,7 +360,7 @@
 
         function reachParty() {
             clearInterval(gameLoop);
-            ctx.drawImage(cakeImg, canvas.width - 150, 250, 100, 100);
+            ctx.drawImage(cakeImg, 450, 300, 100, 100);
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
@@ -399,7 +399,7 @@
             document.getElementById('startScreen').style.display = 'none';
             music.play();
             gameLoop = setInterval(update, 1000 / 60);
-            setInterval(spawnAnimal, 3000); // Spawn a new animal every 3 seconds
+            setInterval(spawnAnimal, 2000); // Spawn a new animal every 3 seconds
         }
 
         canvas.addEventListener('touchstart', handleTouchStart);
