@@ -118,7 +118,8 @@
                 { type: 'platform', x: 400, y: 130, width: 100, height: 20 }, // Raised up
                 { type: 'obstacle', x: 550, y: 250, width: 50, height: 50 }, // Raised up
                 { type: 'platform', x: 600, y: 100, width: 80, height: 20 }, // Raised up
-                { type: 'cake', x: 500, y: 200, width: 100, height: 100 } // Friends waiting, raised up
+                { type: 'cake', x: 500, y: 200, width: 100, height: 100 }, // Friends waiting, raised up
+                { type: 'letter', char: 'A', x: 650, y: 70 } 
             ]
         ];
 
@@ -146,8 +147,8 @@
 
         // Define their positions on the final screen
         const finalScreenCharacters = [
-            { img: vallariImg, x: 550, y: 250, width: 50, height: 50 },
-            { img: eleonoraImg, x: 600, y: 250, width: 50, height: 50 },
+            { img: vallariImg, x: 580, y: 250, width: 50, height: 50 },
+            { img: eleonoraImg, x: 620, y: 250, width: 50, height: 50 },
             { img: dogImg, x: 400, y: 250, width: 60, height: 40 },
             { img: eagleImg, x: 300, y: 200, width: 60, height: 40 }
         ];
@@ -275,6 +276,15 @@
             ctx.fillStyle = 'black';
             ctx.font = '24px Arial';
             ctx.fillText('Euro cash collected: ' + score, 10, 30);
+        }
+
+        function reachParty() {
+            const collectedAllLetters = objects.flat().every(obj => obj.type !== 'letter' || obj.collected);
+            if (collectedAllLetters) {
+                stopGame("You made it to your party with your friends and collected all the letters of your name! Hooray!");
+            } else {
+                stopGame("Ooooh, some letters of your name are missing! Go again and bring them all.");
+            }
         }
 
         function update() {
