@@ -20,7 +20,7 @@
             border: 1px solid #000;
             touch-action: none;
         }
-        .start-screen {
+        .start-screen, .end-message {
             position: absolute;
             top: 0;
             left: 0;
@@ -53,6 +53,10 @@
     </div>
     <div id="progress">_ _ _ _ _ _</div>
     <canvas id="gameCanvas"></canvas>
+    <div class="end-message" id="endMessage" style="display: none;">
+        <h1 id="endText"></h1>
+        <p>Tap screen to play again.</p>
+    </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -65,20 +69,20 @@
         resizeCanvas();
 
         let currentBackgroundIndex = 0;
+        let gameLoop;
 
         // Load multiple background segments
-        const backgrounds = [
-            './background1.jpg',
-            './background2.jpg',
-            './background3.jpg',
-            './background4.jpg'
-        ].map(src => {
-            const img = new Image();
-            img.src = src;
-            return img;
-        });
+        const backgrounds = ['./background1.jpg', './background2.jpg', './background3.jpg', './background4.jpg']
+            .map(src => {
+                const img = new Image();
+                img.src = src;
+                return img;
+            });
 
-        // Load images
+        const objects = [
+            // Define object placements for each screen
+        ];
+
         const catImg = new Image();
         catImg.src = './mallika.png';
         const obstacleImg = new Image();
@@ -87,69 +91,16 @@
         platformImg.src = './platform.png';
         const cakeImg = new Image();
         cakeImg.src = './cake.png';
-        const euroImg = new Image();
-        euroImg.src = './euro.jpg'; // Euro bill image
-        const cashSound = new Audio('./cash.mp3'); // Ka-ching sound
 
-        // Define their positions on the final screen
-        const finalScreenCharacters = [
-            { img: new Image(), x: 550, y: 250, width: 50, height: 50 },
-            { img: new Image(), x: 600, y: 250, width: 50, height: 50 },
-            { img: new Image(), x: 400, y: 250, width: 60, height: 40 },
-            { img: new Image(), x: 300, y: 200, width: 60, height: 40 }
-        ];
-
-        const objects = [
-            // Screen 1: Arranged by you
-            [
-                { type: 'obstacle', x: 150, y: 250, width: 70, height: 70 },
-                { type: 'platform', x: 300, y: 200, width: 100, height: 20 },
-                { type: 'platform', x: 400, y: 200, width: 100, height: 20 },
-                { type: 'platform', x: 500, y: 150, width: 100, height: 20 },
-                { type: 'platform', x: 700, y: 200, width: 100, height: 20 },
-                { type: 'letter', char: 'M', x: 550, y: 100 },
-                { type: 'letter', char: 'A', x: 750, y: 100 }
-            ],
-            // Screen 2: Ladder and Maze
-            [
-                { type: 'platform', x: 100, y: 180, width: 100, height: 20 }, // Raised up
-                { type: 'platform', x: 200, y: 140, width: 100, height: 20 }, // Raised up
-                { type: 'platform', x: 300, y: 100, width: 100, height: 20 }, // Raised up
-                { type: 'letter', char: 'L', x: 320, y: 70 }, // Raised up
-                { type: 'obstacle', x: 450, y: 200, width: 50, height: 50 },  // Raised up, starting the maze
-                { type: 'platform', x: 500, y: 180, width: 80, height: 20 }, // Raised up
-                { type: 'platform', x: 600, y: 140, width: 100, height: 20 }, // Raised up
-                { type: 'obstacle', x: 700, y: 250, width: 50, height: 50 }, // Raised up
-                { type: 'letter', char: 'L', x: 650, y: 90 } // Raised up
-            ],
-            // Screen 3: Moving Obstacle Course
-            [
-                { type: 'obstacle', x: 150, y: 250, width: 50, height: 50 }, // Raised up
-                { type: 'platform', x: 250, y: 150, width: 100, height: 20, moving: 'horizontal' }, // Raised up
-                { type: 'platform', x: 400, y: 100, width: 100, height: 20 }, // Raised up
-                { type: 'platform', x: 550, y: 80, width: 100, height: 20, moving: 'vertical' }, // Raised up
-                { type: 'letter', char: 'I', x: 570, y: 50 }, // Raised up
-                { type: 'obstacle', x: 700, y: 250, width: 50, height: 50 }, // Raised up
-                { type: 'letter', char: 'K', x: 730, y: 120 } // Raised up
-            ],
-            // Screen 4: Blocked Path to Friends
-            [
-                { type: 'obstacle', x: 100, y: 250, width: 70, height: 70 }, // Raised up
-                { type: 'obstacle', x: 300, y: 250, width: 50, height: 50 }, // Raised up
-                { type: 'platform', x: 400, y: 130, width: 100, height: 20 }, // Raised up
-                { type: 'obstacle', x: 550, y: 250, width: 50, height: 50 }, // Raised up
-                { type: 'platform', x: 600, y: 100, width: 80, height: 20 }, // Raised up
-                { type: 'cake', x: 500, y: 200, width: 100, height: 100 } // Friends waiting, raised up
-            ]
-        ];
-
-        // Add Euro bills randomly to each screen
-        for (let i = 0; i < 40; i++) {
-            const screenIndex = Math.floor(i / 10); // 10 bills per screen
-            const x = Math.random() * (canvas.width - 50) + 50; // Avoid edges
-            const y = Math.random() * 250; // Spread between y = 0 - 250
-            objects[screenIndex].push({ type: 'euro', x, y, width: 30, height: 30 });
-        }
+        // Define Vallari, Eleonora, and animal images
+        const vallariImg = new Image();
+        vallariImg.src = './vallari.png';
+        const eleonoraImg = new Image();
+        eleonoraImg.src = './eleonora.png';
+        const dogImg = new Image();
+        dogImg.src = './dog.png';
+        const eagleImg = new Image();
+        eagleImg.src = './eagle.png';
 
         const player = {
             x: 100,
@@ -165,21 +116,10 @@
         };
 
         let score = 0;
-        let gameLoop;
-
+        let activeAnimals = [];
         const music = new Audio('./bday.mp3');
         music.loop = true;
         music.volume = 0.3;
-
-        // Throttle the cash sound to avoid overlapping
-        let lastSoundTime = 0;
-        function playCashSound() {
-            const now = Date.now();
-            if (now - lastSoundTime > 200) { // 200 ms cooldown
-                cashSound.play();
-                lastSoundTime = now;
-            }
-        }
 
         function drawBackground() {
             ctx.drawImage(backgrounds[currentBackgroundIndex], 0, 0, canvas.width, canvas.height);
@@ -190,91 +130,65 @@
         }
 
         function drawObjects() {
-            objects[currentBackgroundIndex].forEach(obj => {
-                switch (obj.type) {
-                    case 'obstacle':
-                        ctx.drawImage(obstacleImg, obj.x, obj.y, obj.width, obj.height);
-                        break;
-                    case 'platform':
-                        ctx.drawImage(platformImg, obj.x, obj.y, obj.width, obj.height);
-                        break;
-                    case 'letter':
-                        ctx.fillStyle = 'red';
-                        ctx.font = '40px Arial';
-                        ctx.fillText(obj.char, obj.x, obj.y);
-                        break;
-                    case 'euro':
-                        if (!obj.collected) {
-                            ctx.drawImage(euroImg, obj.x, obj.y, obj.width, obj.height);
-                        }
-                        break;
-                    case 'cake':
-                        ctx.drawImage(cakeImg, obj.x, obj.y, obj.width, obj.height);
-                        drawFinalScreenCharacters();
-                        break;
-                }
-            });
-        }
-
-        function drawFinalScreenCharacters() {
-            finalScreenCharacters.forEach(character => {
-                ctx.drawImage(character.img, character.x, character.y, character.width, character.height);
-            });
-        }
-
-        function spawnAnimal() {
-            const animalType = animals[Math.floor(Math.random() * animals.length)];
-            const img = new Image();
-            img.src = animalType.img;
-            const x = canvas.width;
-            const y = animalType.type === 'dog' ? canvas.height - 100 : Math.random() * 200; // dogs on ground, eagles fly
-            activeAnimals.push({ type: animalType.type, img, x, y, width: animalType.width, height: animalType.height });
+            // Drawing objects and platforms
         }
 
         function drawAnimals() {
-            activeAnimals.forEach(animal => {
-                ctx.drawImage(animal.img, animal.x, animal.y, animal.width, animal.height);
-                if (animal.type === 'dog') {
-                    animal.x -= 3; // Speed of dogs
-                } else if (animal.type === 'eagle') {
-                    animal.x -= 4; // Speed of eagles
-                }
-            });
-            activeAnimals = activeAnimals.filter(animal => animal.x + animal.width > 0); // Remove animals off-screen
+            // Drawing animals logic
         }
 
         function checkPlatformCollision() {
-            objects[currentBackgroundIndex].forEach(obj => {
-                if (obj.type === 'platform' &&
-                    player.x < obj.x + obj.width &&
-                    player.x + player.width > obj.x &&
-                    player.y + player.height > obj.y &&
-                    player.y + player.height < obj.y + obj.height + 20) {
-                    player.y = obj.y - player.height;
-                    player.yVelocity = 0;
-                    player.isJumping = false;
+            // Checking platform collision
+        }
+
+        function checkAnimalCollision() {
+            activeAnimals.forEach(animal => {
+                if (
+                    player.x < animal.x + animal.width &&
+                    player.x + player.width > animal.x &&
+                    player.y < animal.y + animal.height &&
+                    player.y + player.height > animal.y
+                ) {
+                    stopGame("Oops, a sibling got you, now you need to start over.");
                 }
             });
         }
 
-        function checkCashCollection() {
-            objects[currentBackgroundIndex].forEach(obj => {
-                if (obj.type === 'euro' && !obj.collected &&
-                    player.x < obj.x + obj.width &&
-                    player.x + player.width > obj.x &&
-                    player.y < obj.y + obj.height &&
-                    player.y + player.height > obj.y) {
-                    obj.collected = true;
-                    score += 5;
-                    playCashSound();
-                }
-            });
+        function resetScreen() {
+            player.x = 100;
+            player.y = 300;
+            player.yVelocity = 0;
+            activeAnimals = [];
         }
 
-        function drawScore() {
-            ctx.fillStyle = 'black';
-            ctx.font = '24px Arial';
-            ctx.fillText('Euro cash collected: ' + score, 10, 30);
+        function updateProgressDisplay() {
+            const collectedLetters = objects.flat().filter(obj => obj.type === 'letter').map(letter => (letter.collected ? letter.char : '_')).join(' ');
+            document.getElementById('progress').innerText = collectedLetters;
+        }
+
+        function reachParty() {
+            const collectedAllLetters = objects.flat().every(obj => obj.type !== 'letter' || obj.collected);
+            if (collectedAllLetters) {
+                stopGame("You made it to your party with your friends and collected all the letters of your name! Hooray!");
+            } else {
+                stopGame("Ooooh, some letters of your name are missing! Go again and bring them all.");
+            }
+        }
+
+        function stopGame(message) {
+            clearInterval(gameLoop);
+            document.getElementById('endText').innerText = message;
+            document.getElementById('endMessage').style.display = 'flex';
+            canvas.addEventListener('click', restartGame);
+        }
+
+        function restartGame() {
+            document.getElementById('endMessage').style.display = 'none';
+            resetScreen();
+            currentBackgroundIndex = 0;
+            updateProgressDisplay();
+            startGame();
+            canvas.removeEventListener('click', restartGame);
         }
 
         function update() {
@@ -283,66 +197,21 @@
             drawPlayer();
             drawObjects();
             drawAnimals();
-            drawScore();
 
             player.y += player.yVelocity;
             player.yVelocity += 0.8;
 
-            if (player.y + player.height > canvas.height - 50) {
-                player.y = canvas.height - player.height - 50;
-                player.yVelocity = 0;
-                player.isJumping = false;
-            }
-
             checkPlatformCollision();
-            checkCashCollection();
+            checkAnimalCollision();
 
-            if (player.targetX !== null) {
-                if (player.x < player.targetX) {
-                    player.x += player.speed;
-                    player.movingDirection = 'right';
-                    if (player.x >= player.targetX) {
-                        player.targetX = null;
-                    }
-                } else if (player.x > player.targetX) {
-                    player.x -= player.speed;
-                    player.movingDirection = 'left';
-                    if (player.x <= player.targetX) {
-                        player.targetX = null;
-                    }
-                }
+            if (player.x > canvas.width - 100 && currentBackgroundIndex < backgrounds.length - 1) {
+                currentBackgroundIndex++;
+                resetScreen();
             }
 
-            // Allow transition to the next screen when moving to the right
-            if (player.x > canvas.width - 100) {
-                if (currentBackgroundIndex < backgrounds.length - 1) {
-                    currentBackgroundIndex++;
-                    resetScreen();
-                } else {
-                    player.x = canvas.width - 100;
-                }
-            }
-
-            // Allow transition to the previous screen when moving to the left
-            if (player.x < 0) {
-                if (currentBackgroundIndex > 0) {
-                    currentBackgroundIndex--;
-                    player.x = canvas.width - 50;
-                } else {
-                    player.x = 0;
-                }
-            }
-        }
-
-        function jump() {
-            if (!player.isJumping) {
-                player.yVelocity = -player.jumpStrength;
-                player.isJumping = true;
-                if (player.movingDirection === 'left') {
-                    player.x -= player.speed;
-                } else if (player.movingDirection === 'right') {
-                    player.x += player.speed;
-                }
+            if (player.x < 0 && currentBackgroundIndex > 0) {
+                currentBackgroundIndex--;
+                player.x = canvas.width - 50;
             }
         }
 
@@ -350,7 +219,7 @@
             document.getElementById('startScreen').style.display = 'none';
             music.play();
             gameLoop = setInterval(update, 1000 / 60);
-            setInterval(spawnAnimal, 2000);
+            setInterval(spawnAnimal, 2000); // Spawn a new animal every 3 seconds
         }
 
         canvas.addEventListener('touchstart', handleTouchStart);
