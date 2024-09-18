@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mallika’s Magical Birthday Adventure</title>
     <style>
         body {
@@ -51,7 +50,7 @@
         <p>It’s Mallika’s birthday! Help her find her way to the party where Vallari and Eleonora are waiting with cake! (Flip your screen sideways)</p>
         <button onclick="startGame()">Start Game</button>
     </div>
-    <div id="progress">_ _ _ _ _ _</div>
+    <div id="progress">_ _ _ _ _ _ _</div>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -176,6 +175,7 @@
         let score = 0;
         let gameLoop;
         let animalSpawnInterval;
+        let lives = 3;
 
         const music = new Audio('./bday.mp3');
         music.loop = true;
@@ -262,23 +262,57 @@
                     player.y < animal.y + animal.height &&
                     player.y + player.height > animal.y
                 ) {
-                    resetScreen();
+                    resetGame();
                 }
             });
         }
 
-        function resetScreen() {
-            player.yVelocity = 0;
-            player.isJumping = false;
-            activeAnimals = [];
-            // Optionally reset player.y if necessary
-            // player.y = canvas.height - player.height - 50;
+        function resetGame() {
+            if (lives > 1) {
+                lives--;
+                // Reset player position on current screen
+                player.x = 100;
+                player.y = 300;
+                player.yVelocity = 0;
+                player.isJumping = false;
+                player.targetX = null;
+                player.movingDirection = null;
+                activeAnimals = [];
+            } else {
+                // Reset entire game
+                lives = 3;
+                currentBackgroundIndex = 0;
+                player.x = 100;
+                player.y = 300;
+                player.yVelocity = 0;
+                player.isJumping = false;
+                player.targetX = null;
+                player.movingDirection = null;
+                activeAnimals = [];
+                score = 0;
+
+                // Reset collected letters
+                objects.forEach(screenObjects => {
+                    screenObjects.forEach(obj => {
+                        if (obj.type === 'letter') {
+                            obj.collected = false;
+                        }
+                    });
+                });
+                updateProgressDisplay();
+            }
         }
 
         function drawScore() {
             ctx.fillStyle = 'black';
             ctx.font = '24px Arial';
             ctx.fillText('Score: ' + score, 10, 30);
+        }
+
+        function drawLives() {
+            ctx.fillStyle = 'black';
+            ctx.font = '24px Arial';
+            ctx.fillText('Lives: ' + lives, 10, 60);
         }
 
         function update() {
@@ -288,6 +322,7 @@
             drawObjects();
             drawAnimals();
             drawScore();
+            drawLives();
 
             // Apply gravity
             player.y += player.yVelocity;
@@ -336,7 +371,9 @@
                 if (currentBackgroundIndex < backgrounds.length - 1) {
                     currentBackgroundIndex++;
                     player.x = 0;
-                    resetScreen();
+                    player.yVelocity = 0;
+                    player.isJumping = false;
+                    activeAnimals = [];
                 } else {
                     player.x = canvas.width - player.width;
                 }
@@ -346,7 +383,9 @@
                 if (currentBackgroundIndex > 0) {
                     currentBackgroundIndex--;
                     player.x = canvas.width - player.width;
-                    resetScreen();
+                    player.yVelocity = 0;
+                    player.isJumping = false;
+                    activeAnimals = [];
                 } else {
                     player.x = 0;
                 }
@@ -373,6 +412,31 @@
             }
         }
 
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            let testLine = '';
+            let lineArray = [];
+            for (let n = 0; n < words.length; n++) {
+                testLine += words[n] + ' ';
+                const metrics = context.measureText(testLine);
+                const testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    lineArray.push(line);
+                    line = words[n] + ' ';
+                    testLine = words[n] + ' ';
+                } else {
+                    line += words[n] + ' ';
+                }
+                if (n === words.length - 1) {
+                    lineArray.push(line);
+                }
+            }
+            for (let k = 0; k < lineArray.length; k++) {
+                context.fillText(lineArray[k], x, y + (k * lineHeight));
+            }
+        }
+
         function reachParty() {
             const collectedAllLetters = objects.flat().every(obj => obj.type !== 'letter' || obj.collected);
 
@@ -389,21 +453,27 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             ctx.fillStyle = 'white';
-            ctx.font = '36px Arial';
+            ctx.font = '24px Arial';
             ctx.textAlign = 'center';
 
-            if (collectedAllLetters) {
-                ctx.fillText('You made it to your party with your friends and collected all the letters of your name! Hooray!', canvas.width / 2, canvas.height / 2);
-            } else {
-                ctx.fillText('Ooooh, some letters of your name are missing! Go again and bring them all.', canvas.width / 2, canvas.height / 2);
-            }
+            const message = collectedAllLetters
+                ? 'You made it to your party with your friends and collected all the letters of your name! Hooray!'
+                : 'Ooooh, some letters of your name are missing! Go again and bring them all.';
+
+            const maxWidth = canvas.width - 40; // Leave some padding
+            const lineHeight = 30;
+            const x = canvas.width / 2;
+            const y = canvas.height / 2 - (lineHeight / 2 * 2); // Adjust to center vertically
+
+            wrapText(ctx, message, x, y, maxWidth, lineHeight);
         }
 
         function updateProgressDisplay() {
-            const collectedLetters = objects.flat()
-                .filter(obj => obj.type === 'letter')
-                .map(letter => (letter.collected ? letter.char : '_'))
-                .join(' ');
+            const lettersOrder = ['M', 'A', 'L', 'L', 'I', 'K', 'A'];
+            const collectedLetters = lettersOrder.map(letter => {
+                const isCollected = objects.flat().some(obj => obj.type === 'letter' && obj.char === letter && obj.collected);
+                return isCollected ? letter : '_';
+            }).join(' ');
             document.getElementById('progress').innerText = collectedLetters;
         }
 
