@@ -333,6 +333,16 @@
                 }
             });
 
+            if (player.x > canvas.width - 100) {
+                if (currentBackgroundIndex < backgrounds.length - 1) {
+                    currentBackgroundIndex++;
+                    resetScreen();
+                } else {
+                    player.x = canvas.width - 100;
+                    reachParty();
+                }
+            }
+            
             // Allow transition to the next screen when moving to the right
             if (player.x > canvas.width - 100) {
                 if (currentBackgroundIndex < backgrounds.length - 1) {
